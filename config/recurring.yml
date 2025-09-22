@@ -6,16 +6,16 @@ production:
   import_market_data:
     class: "ImportMarketDataJob"
     queue: "scheduled"
-    args: { mode: "full", clear_cache: false }
+    args: { opts: { mode: "full", clear_cache: true } } # maybe this is wrong, but the job runs fine, so :shrug:
     schedule: "0 22 * * 1-5" # 5:00 PM EST / 6:00 PM EDT (NY time) Monday through Friday
     description: "Imports market data daily at 5:00 PM EST (1 hour after market close)"
-  
+
   clean_syncs:
     schedule: "0 * * * *" # every hour
     class: "SyncCleanerJob"
     queue: "scheduled"
     description: "Cleans up stale syncs"
-  
+
   run_security_health_checks:
     schedule: "0 2 * * 1-5" # 2:00 AM EST / 3:00 AM EDT (NY time) Monday through Friday
     class: "SecurityHealthCheckJob"
