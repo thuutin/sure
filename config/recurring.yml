@@ -6,8 +6,7 @@ default: &default
   import_market_data:
     class: "ImportMarketDataJob"
     queue: "scheduled"
-    # args: [{ mode: 'full', clear_cache: true }] # maybe this is wrong, but the job runs fine, so :shrug:
-    args: [{ mode: 'snapshot', clear_cache: false }] # maybe this is wrong, but the job runs fine, so :shrug:
+    args: [{ mode: 'full', clear_cache: false }] 
     schedule: "0 22 * * 1-5" # 5:00 PM EST / 6:00 PM EDT (NY time) Monday through Friday
     description: "Imports market data daily at 5:00 PM EST (1 hour after market close)"
 
