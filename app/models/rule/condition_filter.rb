@@ -79,7 +79,7 @@ class Rule::ConditionFilter
       raise UnsupportedOperatorError, "Unsupported operator: #{operator} for type: #{type}" unless operators.map(&:last).include?(operator)
 
       if operator == "like"
-        "ILIKE"
+        "LIKE"  # Use LIKE with LOWER() for case-insensitive search
       else
         operator
       end
