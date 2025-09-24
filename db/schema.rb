@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_24_142630) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -33,7 +33,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "import_id"
     t.string "plaid_account_id"
     t.decimal "cash_balance", precision: 19, scale: 4, default: "0.0"
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "status", default: "active"
     t.string "simplefin_account_id"
     t.index ["accountable_id", "accountable_type"], name: "index_accounts_on_accountable_id_and_accountable_type"
@@ -177,7 +177,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "user_id", null: false
     t.string "title", null: false
     t.string "instructions"
-    t.jsonb "error"
+    t.json "error"
     t.string "latest_assistant_response_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -192,14 +192,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.decimal "apr", precision: 10, scale: 2
     t.date "expiration_date"
     t.decimal "annual_fee", precision: 10, scale: 2
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
   create_table "cryptos", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
@@ -208,8 +208,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "enrichable_id", null: false
     t.string "source"
     t.string "attribute_name"
-    t.jsonb "value"
-    t.jsonb "metadata"
+    t.json "value"
+    t.json "metadata"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["enrichable_id", "enrichable_type", "source", "attribute_name"], name: "idx_on_enrichable_id_enrichable_type_source_attribu_5be5f63e08", unique: true
@@ -219,7 +219,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
   create_table "depositories", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
@@ -237,7 +237,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.text "notes"
     t.boolean "excluded", default: false
     t.string "plaid_id"
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.index "lower((name)::text)", name: "index_entries_on_lower_name"
     t.index ["account_id", "date"], name: "index_entries_on_account_id_and_date"
     t.index ["account_id"], name: "index_entries_on_account_id"
@@ -360,7 +360,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
   end
 
   create_table "imports", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.jsonb "column_mappings"
+    t.json "column_mappings"
     t.string "status"
     t.string "raw_file_str"
     t.string "normalized_csv_str"
@@ -395,7 +395,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
   create_table "investments", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
@@ -430,7 +430,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.decimal "interest_rate", precision: 10, scale: 3
     t.integer "term_months"
     t.decimal "initial_balance", precision: 19, scale: 4
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
@@ -529,14 +529,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
   create_table "other_assets", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
   create_table "other_liabilities", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
@@ -552,10 +552,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "mask"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "raw_payload", default: {}
-    t.jsonb "raw_transactions_payload", default: {}
-    t.jsonb "raw_investments_payload", default: {}
-    t.jsonb "raw_liabilities_payload", default: {}
+    t.json "raw_payload", default: {}
+    t.json "raw_transactions_payload", default: {}
+    t.json "raw_investments_payload", default: {}
+    t.json "raw_liabilities_payload", default: {}
     t.index ["plaid_id"], name: "index_plaid_accounts_on_plaid_id", unique: true
     t.index ["plaid_item_id"], name: "index_plaid_accounts_on_plaid_item_id"
   end
@@ -576,8 +576,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "institution_id"
     t.string "institution_color"
     t.string "status", default: "good", null: false
-    t.jsonb "raw_payload", default: {}
-    t.jsonb "raw_institution_payload", default: {}
+    t.json "raw_payload", default: {}
+    t.json "raw_institution_payload", default: {}
     t.index ["family_id"], name: "index_plaid_items_on_family_id"
     t.index ["plaid_id"], name: "index_plaid_items_on_plaid_id", unique: true
   end
@@ -588,7 +588,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.integer "year_built"
     t.integer "area_value"
     t.string "area_unit"
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
@@ -672,8 +672,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.datetime "updated_at", null: false
     t.string "active_impersonator_session_id"
     t.datetime "subscribed_at"
-    t.jsonb "prev_transaction_page_params", default: {}
-    t.jsonb "data", default: {}
+    t.json "prev_transaction_page_params", default: {}
+    t.json "data", default: {}
     t.index ["active_impersonator_session_id"], name: "index_sessions_on_active_impersonator_session_id"
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
@@ -695,13 +695,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.decimal "available_balance", precision: 19, scale: 4
     t.string "account_type"
     t.string "account_subtype"
-    t.jsonb "raw_payload"
-    t.jsonb "raw_transactions_payload"
+    t.json "raw_payload"
+    t.json "raw_transactions_payload"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "balance_date"
-    t.jsonb "extra"
-    t.jsonb "org_data"
+    t.json "extra"
+    t.json "org_data"
     t.index ["account_id"], name: "index_simplefin_accounts_on_account_id"
     t.index ["simplefin_item_id"], name: "index_simplefin_accounts_on_simplefin_item_id"
   end
@@ -715,8 +715,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "institution_url"
     t.string "status", default: "good"
     t.boolean "scheduled_for_deletion", default: false
-    t.jsonb "raw_payload"
-    t.jsonb "raw_institution_payload"
+    t.json "raw_payload"
+    t.json "raw_institution_payload"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "pending_account_setup", default: false, null: false
@@ -743,7 +743,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "syncable_id", null: false
     t.string "status", default: "pending"
     t.string "error"
-    t.jsonb "data"
+    t.json "data"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "parent_id"
@@ -784,8 +784,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.string "provider_call_id"
     t.string "type", null: false
     t.string "function_name"
-    t.jsonb "function_arguments"
-    t.jsonb "function_result"
+    t.json "function_arguments"
+    t.json "function_result"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["message_id"], name: "index_tool_calls_on_message_id"
@@ -798,7 +798,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "currency"
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.index ["security_id"], name: "index_trades_on_security_id"
   end
 
@@ -807,7 +807,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_124734) do
     t.datetime "updated_at", null: false
     t.string "category_id"
     t.string "merchant_id"
-    t.jsonb "locked_attributes", default: {}
+    t.json "locked_attributes", default: {}
     t.string "kind", default: "standard", null: false
     t.string "external_id"
     t.index ["category_id"], name: "index_transactions_on_category_id"
