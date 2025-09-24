@@ -3,6 +3,8 @@ class Account < ApplicationRecord
 
   validates :name, :balance, :currency, presence: true
 
+  before_save :set_classification
+
   belongs_to :family
   belongs_to :import, optional: true
   belongs_to :simplefin_account, optional: true
@@ -209,4 +211,14 @@ class Account < ApplicationRecord
       raise "Unknown account type: #{accountable_type}"
     end
   end
+
+  private
+    def set_classification
+      self.classification = case accountable_type
+      when "Loan", "CreditCard", "OtherLiability"
+        "liability"
+      else
+        "asset"
+      end
+    end
 end

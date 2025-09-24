@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_24_142630) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_24_191112) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -29,13 +29,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_142630) do
     t.string "accountable_id"
     t.decimal "balance", precision: 19, scale: 4
     t.string "currency"
-    t.virtual "classification", type: :string, as: "\nCASE\n    WHEN ((accountable_type)::text = ANY (ARRAY[('Loan'::character varying)::text, ('CreditCard'::character varying)::text, ('OtherLiability'::character varying)::text])) THEN 'liability'::text\n    ELSE 'asset'::text\nEND", stored: true
     t.string "import_id"
     t.string "plaid_account_id"
     t.decimal "cash_balance", precision: 19, scale: 4, default: "0.0"
     t.json "locked_attributes", default: {}
     t.string "status", default: "active"
     t.string "simplefin_account_id"
+    t.string "classification"
     t.index ["accountable_id", "accountable_type"], name: "index_accounts_on_accountable_id_and_accountable_type"
     t.index ["accountable_type"], name: "index_accounts_on_accountable_type"
     t.index ["currency"], name: "index_accounts_on_currency"
@@ -127,10 +127,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_142630) do
     t.decimal "cash_adjustments", precision: 19, scale: 4, default: "0.0", null: false
     t.decimal "non_cash_adjustments", precision: 19, scale: 4, default: "0.0", null: false
     t.integer "flows_factor", default: 1, null: false
-    t.virtual "start_balance", type: :decimal, precision: 19, scale: 4, as: "(start_cash_balance + start_non_cash_balance)", stored: true
-    t.virtual "end_cash_balance", type: :decimal, precision: 19, scale: 4, as: "((start_cash_balance + ((cash_inflows - cash_outflows) * (flows_factor)::numeric)) + cash_adjustments)", stored: true
-    t.virtual "end_non_cash_balance", type: :decimal, precision: 19, scale: 4, as: "(((start_non_cash_balance + ((non_cash_inflows - non_cash_outflows) * (flows_factor)::numeric)) + net_market_flows) + non_cash_adjustments)", stored: true
-    t.virtual "end_balance", type: :decimal, precision: 19, scale: 4, as: "(((start_cash_balance + ((cash_inflows - cash_outflows) * (flows_factor)::numeric)) + cash_adjustments) + (((start_non_cash_balance + ((non_cash_inflows - non_cash_outflows) * (flows_factor)::numeric)) + net_market_flows) + non_cash_adjustments))", stored: true
+    t.decimal "start_balance", precision: 19, scale: 4
+    t.decimal "end_cash_balance", precision: 19, scale: 4
+    t.decimal "end_non_cash_balance", precision: 19, scale: 4
+    t.decimal "end_balance", precision: 19, scale: 4
     t.index ["account_id", "date", "currency"], name: "index_account_balances_on_account_id_date_currency_unique", unique: true
     t.index ["account_id", "date"], name: "index_balances_on_account_id_and_date", order: { date: :desc }
     t.index ["account_id"], name: "index_balances_on_account_id"

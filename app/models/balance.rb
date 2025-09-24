@@ -6,6 +6,8 @@ class Balance < ApplicationRecord
   validates :account, :date, :balance, presence: true
   validates :flows_factor, inclusion: { in: [ -1, 1 ] }
 
+  before_save :calculate_derived_balances
+
   monetize :balance, :cash_balance,
            :start_cash_balance, :start_non_cash_balance, :start_balance,
            :cash_inflows, :cash_outflows, :non_cash_inflows, :non_cash_outflows, :net_market_flows,
@@ -27,5 +29,19 @@ class Balance < ApplicationRecord
 
     def favorable_direction
       flows_factor == -1 ? "down" : "up"
+    end
+
+    def calculate_derived_balances
+      # Calculate start_balance
+      self.start_balance = start_cash_balance + start_non_cash_balance
+
+      # Calculate end_cash_balance
+      self.end_cash_balance = (start_cash_balance + ((cash_inflows - cash_outflows) * flows_factor)) + cash_adjustments
+
+      # Calculate end_non_cash_balance
+      self.end_non_cash_balance = ((start_non_cash_balance + ((non_cash_inflows - non_cash_outflows) * flows_factor)) + net_market_flows) + non_cash_adjustments
+
+      # Calculate end_balance
+      self.end_balance = end_cash_balance + end_non_cash_balance
     end
 end
