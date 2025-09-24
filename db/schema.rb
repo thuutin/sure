@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_24_191112) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -238,7 +238,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_191112) do
     t.boolean "excluded", default: false
     t.string "plaid_id"
     t.json "locked_attributes", default: {}
-    t.index "lower((name)::text)", name: "index_entries_on_lower_name"
     t.index ["account_id", "date"], name: "index_entries_on_account_id_and_date"
     t.index ["account_id"], name: "index_entries_on_account_id"
     t.index ["amount"], name: "index_entries_on_amount"
@@ -247,6 +246,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_191112) do
     t.index ["entryable_type"], name: "index_entries_on_entryable_type"
     t.index ["excluded"], name: "index_entries_on_excluded"
     t.index ["import_id"], name: "index_entries_on_import_id"
+    t.index ["name"], name: "index_entries_on_name"
   end
 
   create_table "exchange_rates", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -445,9 +445,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_191112) do
     t.string "type", null: false
     t.string "source"
     t.string "provider_merchant_id"
-    t.index ["family_id", "name"], name: "index_merchants_on_family_id_and_name", unique: true, where: "((type)::text = 'FamilyMerchant'::text)"
+    t.index ["family_id", "name"], name: "index_merchants_on_family_id_and_name"
     t.index ["family_id"], name: "index_merchants_on_family_id"
-    t.index ["source", "name"], name: "index_merchants_on_source_and_name", unique: true, where: "((type)::text = 'ProviderMerchant'::text)"
+    t.index ["source", "name"], name: "index_merchants_on_source_and_name"
     t.index ["type"], name: "index_merchants_on_type"
   end
 
@@ -859,7 +859,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_191112) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["family_id"], name: "index_users_on_family_id"
     t.index ["last_viewed_chat_id"], name: "index_users_on_last_viewed_chat_id"
-    t.index ["otp_secret"], name: "index_users_on_otp_secret", unique: true, where: "(otp_secret IS NOT NULL)"
+    t.index ["otp_secret"], name: "index_users_on_otp_secret"
   end
 
   create_table "valuations", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
