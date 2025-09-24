@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_24_215505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -569,8 +569,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
     t.boolean "scheduled_for_deletion", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "available_products", default: [], array: true
-    t.string "billed_products", default: [], array: true
     t.string "plaid_region", default: "us", null: false
     t.string "institution_url"
     t.string "institution_id"
@@ -578,6 +576,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
     t.string "status", default: "good", null: false
     t.json "raw_payload", default: {}
     t.json "raw_institution_payload", default: {}
+    t.json "available_products", default: []
+    t.json "billed_products", default: []
     t.index ["family_id"], name: "index_plaid_items_on_family_id"
     t.index ["plaid_id"], name: "index_plaid_items_on_plaid_id", unique: true
   end
@@ -648,9 +648,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
     t.datetime "failed_fetch_at"
     t.integer "failed_fetch_count", default: 0, null: false
     t.datetime "last_health_check_at"
-    t.index "upper((ticker)::text), COALESCE(upper((exchange_operating_mic)::text), ''::text)", name: "index_securities_on_ticker_and_exchange_operating_mic_unique", unique: true
     t.index ["country_code"], name: "index_securities_on_country_code"
     t.index ["exchange_operating_mic"], name: "index_securities_on_exchange_operating_mic"
+    t.index ["ticker", "exchange_operating_mic"], name: "index_securities_on_ticker_and_exchange_operating_mic_unique", unique: true
   end
 
   create_table "security_prices", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -843,7 +843,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
     t.string "unconfirmed_email"
     t.string "otp_secret"
     t.boolean "otp_required", default: false, null: false
-    t.string "otp_backup_codes", default: [], array: true
     t.boolean "show_sidebar", default: true
     t.string "default_period", default: "last_30_days", null: false
     t.string "last_viewed_chat_id"
@@ -852,10 +851,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
     t.string "theme", default: "system"
     t.boolean "rule_prompts_disabled", default: false
     t.datetime "rule_prompt_dismissed_at"
-    t.text "goals", default: [], array: true
     t.datetime "set_onboarding_preferences_at"
     t.datetime "set_onboarding_goals_at"
     t.string "default_account_order", default: "name_asc"
+    t.json "otp_backup_codes", default: []
+    t.json "goals", default: []
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["family_id"], name: "index_users_on_family_id"
     t.index ["last_viewed_chat_id"], name: "index_users_on_last_viewed_chat_id"
@@ -865,8 +865,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
   create_table "valuations", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.jsonb "locked_attributes", default: {}
     t.string "kind", default: "reconciliation", null: false
+    t.json "locked_attributes", default: {}
   end
 
   create_table "vehicles", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -877,8 +877,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_24_194505) do
     t.string "mileage_unit"
     t.string "make"
     t.string "model"
-    t.jsonb "locked_attributes", default: {}
     t.string "subtype"
+    t.json "locked_attributes", default: {}
   end
 
   add_foreign_key "accounts", "families"
