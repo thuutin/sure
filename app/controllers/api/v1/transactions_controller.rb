@@ -102,7 +102,7 @@ class Api::V1::TransactionsController < Api::V1::BaseController
       error: "internal_server_error",
       message: "Error: #{e.message}"
     }, status: :internal_server_error
-end
+  end
 
   def update
     if @entry.update(entry_params_for_update)
@@ -248,7 +248,7 @@ end
              "entries.name ILIKE ? OR entries.notes ILIKE ? OR merchants.name ILIKE ?",
              search_term, search_term, search_term
            )
-end
+    end
 
     def transaction_params
       params.require(:transaction).permit(
