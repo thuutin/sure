@@ -143,7 +143,7 @@ class Balance::ChartSeriesBuilder
           ORDER BY er.date DESC
           LIMIT 1
         ) er ON TRUE
-        WHERE accounts.id = ANY(array[:account_ids]::uuid[])
+        WHERE accounts.id::text = ANY(array[:account_ids])
         GROUP BY d.date
         ORDER BY d.date
       SQL
