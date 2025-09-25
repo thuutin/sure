@@ -65,21 +65,25 @@ class Balance::ChartSeriesBuilder
       )
     end
 
-    def query_data
-      @query_data ||= Balance.find_by_sql([
-        query,
-        {
-          account_ids: account_ids,
-          target_currency: currency,
-          start_date: period.start_date,
-          end_date: period.end_date,
-          interval: interval,
-          sign_multiplier: sign_multiplier
-        }
-      ])
-    rescue => e
-      Rails.logger.error "Query data error: #{e.message} for accounts #{account_ids}, period #{period.start_date} to #{period.end_date}"
-      raise
+    def accounts
+      @accounts ||= Account.where(id: account_ids).select(:id, :currency, :name)
+    end
+
+    def exchange_rates
+      @exchange_rates ||= ExchangeRate.where(date: period.date_range)
+      .and(ExchangeRate.where(to_currency: currency))
+      .and(ExchangeRate.where(from_currency: accounts.pluck(:currency).uniq))
+      .select(:id, :date, :rate, :from_currency, :to_currency)
+      .group_by { |er| [ er.from_currency, er.to_currency ] }
+      .transform_values { |rates| rates.sort_by(&:date).reverse }
+    end
+
+    def balances
+      @balances ||= Balance.where(account_id: account_ids)
+      .where(date: period.date_range)
+      .select(:account_id, :date, :end_balance, :end_cash_balance, :end_non_cash_balance, :start_balance, :start_cash_balance, :start_non_cash_balance, :flows_factor)
+      .group_by { |b| [ b.account_id, b.date ] }
+      .transform_values { |balances| balances.sort_by(&:date).last }
     end
 
     # Since the query aggregates the *net* of assets - liabilities, this means that if we're looking at
@@ -88,6 +92,55 @@ class Balance::ChartSeriesBuilder
     # the values by multiplying by -1.
     def sign_multiplier
       favorable_direction == "down" ? -1 : 1
+    end
+
+    def rate_for(from, to, date)
+      if from == to
+        return 1
+      end
+      rates = exchange_rates.dig([ from, to ]) || []
+      closest_rate = rates.bsearch { |rate| rate.date <= date }
+      closest_rate&.rate || 1
+    end
+
+    def query_data
+      @query_data ||= begin
+        result = date_series.map do |date|
+          OpenStruct.new(
+            date: date,
+            end_balance: 0,
+            end_cash_balance: 0,
+            end_holdings_balance: 0,
+            start_balance: 0,
+            start_cash_balance: 0,
+            start_holdings_balance: 0
+          )
+        end
+        accounts.each do |account|
+          previous = nil
+          date_series.map.with_index.each do |date, index|
+            balance = balances.dig([ account.id, date ]) || previous
+            previous = balance
+            rate = rate_for(account.currency, currency, date)
+            if balance
+              factor = balance.flows_factor * sign_multiplier * rate
+              result[index].end_balance += balance.end_balance * factor
+              result[index].end_cash_balance += balance.end_cash_balance * factor
+              result[index].start_balance += balance.start_balance * factor
+              result[index].start_cash_balance += balance.start_cash_balance * factor
+              if balance.flows_factor == 1
+                result[index].end_holdings_balance += balance.end_non_cash_balance * factor
+                result[index].start_holdings_balance += balance.start_non_cash_balance * factor
+              end
+              puts "ending balance for account #{account.name}: #{balance.end_balance * factor} with rate #{rate} on #{date}"
+            end
+          end
+        end
+        result
+      end
+    rescue => e
+      Rails.logger.error "Query data error: #{e.message} for accounts #{account_ids}, period #{period.start_date} to #{period.end_date}"
+      raise
     end
 
     def query
@@ -147,5 +200,29 @@ class Balance::ChartSeriesBuilder
         GROUP BY d.date
         ORDER BY d.date
       SQL
+    end
+
+    def date_series
+      @date_series ||= begin
+        dates = []
+        current_date = period.start_date
+
+        while current_date <= period.end_date
+          dates << current_date
+          current_date = case interval
+          when "1 day"
+            current_date + 1.day
+          when "1 week"
+            current_date + 1.week
+          else
+            # Default to daily if interval is not recognized
+            current_date + 1.day
+          end
+        end
+
+        # Ensure end date is included
+        dates << period.end_date unless dates.include?(period.end_date)
+        dates.sort
+      end
     end
 end
