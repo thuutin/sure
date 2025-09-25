@@ -87,15 +87,19 @@ class Balance::ChartSeriesBuilder
     end
 
     def starting_balances
-      @starting_balances ||= Balance
-      .where(account_id: account_ids)
-      .where("date <= ?", period.start_date)
-      .order(:account_id, date: :desc)
-      .select("DISTINCT ON (account_id) *")
-      .group_by { |b| b.account_id }
-      .transform_values { |balances| balances.last }
-    end
+      @starting_balances ||= begin
+        latest_dates = Balance.where("date <= ?", period.start_date)
+              .where(account_id: account_ids)
+              .group(:account_id)
+              .maximum(:date)
 
+        Balance.where(account_id: latest_dates.keys)
+          .where(date: latest_dates.values)
+          .select(:account_id, :date, :end_balance, :end_cash_balance, :end_non_cash_balance, :start_balance, :start_cash_balance, :start_non_cash_balance, :flows_factor)
+          .group_by { |b| b.account_id }
+          .transform_values { |balances| balances.sort_by(&:date).last }
+      end
+    end
     # Since the query aggregates the *net* of assets - liabilities, this means that if we're looking at
     # a single liability account, we'll get a negative set of values.  This is not what the user expects
     # to see.  When favorable direction is "down" (i.e. liability, decrease is "good"), we need to invert
