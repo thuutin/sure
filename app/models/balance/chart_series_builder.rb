@@ -86,6 +86,16 @@ class Balance::ChartSeriesBuilder
       .transform_values { |balances| balances.sort_by(&:date).last }
     end
 
+    def starting_balances
+      @starting_balances ||= Balance
+      .where(account_id: account_ids)
+      .where("date <= ?", period.start_date)
+      .order(:account_id, date: :desc)
+      .select("DISTINCT ON (account_id) *")
+      .group_by { |b| b.account_id }
+      .transform_values { |balances| balances.last }
+    end
+
     # Since the query aggregates the *net* of assets - liabilities, this means that if we're looking at
     # a single liability account, we'll get a negative set of values.  This is not what the user expects
     # to see.  When favorable direction is "down" (i.e. liability, decrease is "good"), we need to invert
@@ -104,6 +114,7 @@ class Balance::ChartSeriesBuilder
     end
 
     def query_data
+      puts "starting balances: #{starting_balances}"
       @query_data ||= begin
         result = date_series.map do |date|
           OpenStruct.new(
@@ -117,7 +128,8 @@ class Balance::ChartSeriesBuilder
           )
         end
         accounts.each do |account|
-          previous = nil
+          previous = starting_balances.dig(account.id)
+          puts "previous for account #{account.name}: #{previous.end_balance} on #{period.start_date}, date: #{previous.date}"
           date_series.map.with_index.each do |date, index|
             balance = balances.dig([ account.id, date ]) || previous
             previous = balance
