@@ -85,7 +85,7 @@ class IncomeStatement::FamilyStats
         StatRow.new(
           classification: classification,
           median: median_for(sum_amount_by_intervals),
-          avg: total / transactions_count
+          avg: transactions_count.positive? ? total.fdiv(transactions_count) : 0
         )
       end
     end

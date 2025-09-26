@@ -91,12 +91,11 @@ class IncomeStatement::CategoryStats
             .values
             .sort
           transactions_count = sum_amount_by_intervals.count
-          total = sum_amount_by_intervals.sum()
           StatRow.new(
             category_id: category_id,
             classification: classification,
             median: median_for(sum_amount_by_intervals),
-            avg: total / transactions_count
+            avg: transactions_count.positive? ? total.fdiv(transactions_count) : 0
           )
         end
       end.flatten
