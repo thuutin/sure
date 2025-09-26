@@ -118,7 +118,6 @@ class Balance::ChartSeriesBuilder
     end
 
     def query_data
-      puts "starting balances: #{starting_balances}"
       @query_data ||= begin
         result = date_series.map do |date|
           OpenStruct.new(
@@ -133,7 +132,6 @@ class Balance::ChartSeriesBuilder
         end
         accounts.each do |account|
           previous = starting_balances.dig(account.id)
-          puts "previous for account #{account.name}: #{previous.end_balance} on #{period.start_date}, date: #{previous.date}"
           date_series.map.with_index.each do |date, index|
             balance = balances.dig([ account.id, date ]) || previous
             previous = balance
@@ -148,7 +146,6 @@ class Balance::ChartSeriesBuilder
                 result[index].end_holdings_balance += balance.end_non_cash_balance * factor
                 result[index].start_holdings_balance += balance.start_non_cash_balance * factor
               end
-              puts "ending balance for account #{account.name}: #{balance.end_balance * factor} with rate #{rate} on #{date}"
             end
           end
         end
