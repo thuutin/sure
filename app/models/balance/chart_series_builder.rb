@@ -65,16 +65,17 @@ class Balance::ChartSeriesBuilder
       )
     end
 
+    def accounts
+      @accounts ||= Account.where(id: account_ids).select(:id, :currency, :name)
+    end
+
     def exchange_rates
-      @exchange_rates ||=  begin
-        accounts = Account.where(id: account_ids)
-        ExchangeRate.where(date: period.date_range)
-          .and(ExchangeRate.where(to_currency: currency))
-          .and(ExchangeRate.where(from_currency: accounts.pluck(:currency).uniq))
-          .select(:id, :date, :rate, :from_currency, :to_currency)
-          .group_by { |er| [ er.from_currency, er.to_currency ] }
-          .transform_values { |rates| rates.sort_by(&:date).reverse }
-      end
+      @exchange_rates ||= ExchangeRate.where(date: period.date_range)
+      .and(ExchangeRate.where(to_currency: currency))
+      .and(ExchangeRate.where(from_currency: accounts.pluck(:currency).uniq))
+      .select(:id, :date, :rate, :from_currency, :to_currency)
+      .group_by { |er| [ er.from_currency, er.to_currency ] }
+      .transform_values { |rates| rates.sort_by(&:date).reverse }
     end
 
     def balances
@@ -117,6 +118,7 @@ class Balance::ChartSeriesBuilder
     end
 
     def query_data
+      puts "starting balances: #{starting_balances}"
       @query_data ||= begin
         result = date_series.map do |date|
           OpenStruct.new(
