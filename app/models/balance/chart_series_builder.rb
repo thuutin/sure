@@ -156,65 +156,6 @@ class Balance::ChartSeriesBuilder
       raise
     end
 
-    def query
-      <<~SQL
-        WITH dates AS (
-          SELECT generate_series(DATE :start_date, DATE :end_date, :interval::interval)::date AS date
-          UNION DISTINCT
-          SELECT :end_date::date  -- Ensure end date is included
-        )
-        SELECT
-          d.date,
-          -- Use flows_factor: already handles asset (+1) vs liability (-1)
-          COALESCE(SUM(last_bal.end_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS end_balance,
-          COALESCE(SUM(last_bal.end_cash_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS end_cash_balance,
-          -- Holdings only for assets (flows_factor = 1)
-          COALESCE(SUM(
-            CASE WHEN last_bal.flows_factor = 1
-              THEN last_bal.end_non_cash_balance
-              ELSE 0
-            END * COALESCE(er.rate, 1) * :sign_multiplier::integer
-          ), 0) AS end_holdings_balance,
-          -- Previous balances
-          COALESCE(SUM(last_bal.start_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS start_balance,
-          COALESCE(SUM(last_bal.start_cash_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS start_cash_balance,
-          COALESCE(SUM(
-            CASE WHEN last_bal.flows_factor = 1
-              THEN last_bal.start_non_cash_balance
-              ELSE 0
-            END * COALESCE(er.rate, 1) * :sign_multiplier::integer
-          ), 0) AS start_holdings_balance
-        FROM dates d
-        CROSS JOIN accounts
-        LEFT JOIN LATERAL (
-          SELECT b.end_balance,
-                 b.end_cash_balance,
-                 b.end_non_cash_balance,
-                 b.start_balance,
-                 b.start_cash_balance,
-                 b.start_non_cash_balance,
-                 b.flows_factor
-          FROM balances b
-          WHERE b.account_id = accounts.id
-            AND b.date <= d.date
-          ORDER BY b.date DESC
-          LIMIT 1
-        ) last_bal ON TRUE
-        LEFT JOIN LATERAL (
-          SELECT er.rate
-          FROM exchange_rates er
-          WHERE er.from_currency = accounts.currency
-            AND er.to_currency = :target_currency
-            AND er.date <= d.date
-          ORDER BY er.date DESC
-          LIMIT 1
-        ) er ON TRUE
-        WHERE accounts.id::text = ANY(array[:account_ids])
-        GROUP BY d.date
-        ORDER BY d.date
-      SQL
-    end
-
     def date_series
       @date_series ||= begin
         dates = []
