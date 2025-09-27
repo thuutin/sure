@@ -63,6 +63,9 @@ GEM
       activemodel (= 7.2.2.2)
       activesupport (= 7.2.2.2)
       timeout (>= 0.4.0)
+    activerecord-enhancedsqlite3-adapter (0.8.0)
+      activerecord (>= 7.1)
+      sqlite3 (>= 1.6)
     activerecord-import (2.2.0)
       activerecord (>= 4.2)
     activestorage (7.2.2.2)
@@ -675,6 +678,7 @@ PLATFORMS
 
 DEPENDENCIES
   aasm
+  activerecord-enhancedsqlite3-adapter (~> 0.8.0)
   activerecord-import
   after_commit_everywhere (~> 1.0)
   aws-sdk-s3 (~> 1.177.0)
@@ -731,7 +735,7 @@ DEPENDENCIES
   ruby-lsp-rails
   ruby-openai
   rubyzip (~> 2.3)
-  seed_dump (~> 3.3.1)
+  seed_dump (~> 3.3)
   selenium-webdriver
   sentry-rails
   sentry-ruby
