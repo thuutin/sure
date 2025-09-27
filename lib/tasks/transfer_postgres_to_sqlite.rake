@@ -62,6 +62,7 @@ namespace :db do
         # Switch to SQLite connection
         ActiveRecord::Base.establish_connection(sqlite_config)
         ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = OFF")
+        ActiveRecord::Base.connection.execute("PRAGMA strict = ON")
 
         # Clear existing data in SQLite table
         ActiveRecord::Base.connection.execute("DELETE FROM #{table_name}")
@@ -87,6 +88,8 @@ namespace :db do
             when Hash
               # Convert hashes to JSON
               "'#{value.to_json}'"
+            when TrueClass, FalseClass
+              value ? "1" : "0"
             else
               "'#{value}'"
             end
