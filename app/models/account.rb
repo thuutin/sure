@@ -157,11 +157,7 @@ class Account < ApplicationRecord
   def current_holdings
     holdings.where(currency: currency)
             .where.not(qty: 0)
-            .where(
-              id: holdings.select("DISTINCT ON (security_id) id")
-                          .where(currency: currency)
-                          .order(:security_id, date: :desc)
-            )
+            .where(id: :security_id)
             .order(amount: :desc)
   end
 
