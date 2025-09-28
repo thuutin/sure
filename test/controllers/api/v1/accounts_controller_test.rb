@@ -8,6 +8,10 @@ class Api::V1::AccountsControllerTest < ActionDispatch::IntegrationTest
     @other_family_user = users(:family_member)
     @other_family_user.update!(family: families(:empty))
 
+    Account.all.each do |account|
+      account.save! # trigger callback to set classification
+    end
+
     @oauth_app = Doorkeeper::Application.create!(
       name: "Test API App",
       redirect_uri: "https://example.com/callback",
