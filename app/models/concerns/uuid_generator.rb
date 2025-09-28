@@ -7,6 +7,7 @@ module UuidGenerator
   included do
     validates :id, presence: true, if: :uses_string_primary_key?
     before_validation :generate_uuid, if: :uses_string_primary_key?
+    before_save :generate_uuid, if: :uses_string_primary_key?
   end
 
   private
