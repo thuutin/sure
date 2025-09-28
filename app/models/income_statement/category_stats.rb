@@ -91,6 +91,7 @@ class IncomeStatement::CategoryStats
             .values
             .sort
           transactions_count = sum_amount_by_intervals.count
+          total = sum_amount_by_intervals.sum
           StatRow.new(
             category_id: category_id,
             classification: classification,

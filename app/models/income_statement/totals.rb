@@ -41,38 +41,34 @@ class IncomeStatement::Totals
       end
     end
 
-    def build_totals
-      incomes = categories.map do |category|
-        income_entries = entries.filter { |e| transactions[e.entryable_id]&.category_id == category.id && e.amount < 0 }
-        transactions_count = income_entries.count
-        total = 0
-        income_entries.each do |e|
-          total += e.amount * (rates[[ e.currency, @family.currency, e.date ]] || 1)
-        end
-        TotalsRow.new(
-          parent_category_id: category.parent_id,
-          category_id: category.id,
-          classification: "income",
-          total: total.abs,
-          transactions_count: transactions_count
-        )
+    def should_include_entry?(entry, classification)
+      case classification
+      when "income"
+        entry.amount < 0
+      when "expense"
+        entry.amount >= 0
       end
+    end
 
-      expenses = categories.map do |category|
-        expense_entries = entries.filter { |e| transactions[e.entryable_id]&.category_id == category.id && e.amount >= 0 }
-        total = 0
-        expense_entries.each do |e|
-          total += e.amount * (rates[[ e.currency, @family.currency, e.date ]] || 1)
+    def build_totals
+      [ "income", "expense" ].map do |classification|
+        no_category = OpenStruct.new(id: nil, parent_id: nil)
+        include_no_category = categories.to_a + [no_category]
+        include_no_category.map do |category|
+          entries_by_category = entries.filter { |e| transactions[e.entryable_id]&.category_id == category.id && should_include_entry?(e, classification) }
+          transactions_count = entries_by_category.count
+          total = 0
+          entries_by_category.each do |e|
+            total += e.amount * (rates[[ e.currency, @family.currency, e.date ]] || 1)
+          end
+          TotalsRow.new(
+            parent_category_id: category.parent_id,
+            category_id: category.id,
+            classification: classification,
+            total: total.abs,
+            transactions_count: transactions_count
+          )
         end
-        transactions_count = expense_entries.count
-        TotalsRow.new(
-          parent_category_id: category.parent_id,
-          category_id: category.id,
-          classification: "expense",
-          total: total.abs,
-          transactions_count: transactions_count
-        )
-      end
-      incomes + expenses
+      end.flatten
     end
 end
