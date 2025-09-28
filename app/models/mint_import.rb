@@ -36,7 +36,8 @@ class MintImport < Import
           currency: row.currency,
           notes: row.notes,
           entryable: Transaction.new(category: category, tags: tags),
-          import: self
+          import: self,
+          id: SecureRandom.uuid
 
         entry.save!
       end
