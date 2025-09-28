@@ -27,8 +27,10 @@ class TradeImport < Import
             amount: row.signed_amount,
             name: row.name,
             currency: row.currency.presence || mapped_account.currency,
-            import: self
+            import: self,
+            id: SecureRandom.uuid
           ),
+          id: SecureRandom.uuid
         )
       end
 
