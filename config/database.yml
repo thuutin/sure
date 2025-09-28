@@ -1,12 +1,16 @@
 default: &default
-  adapter: sqlite3
-  pragmas:
-    foreign_keys: "ON"
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 3 } %>
+  host: <%= ENV.fetch("DB_HOST") { "127.0.0.1" } %>
+  port: <%= ENV.fetch("DB_PORT") { "5432" } %>
+  user: <%= ENV.fetch("POSTGRES_USER") { nil } %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD") { nil } %>
 
 development:
   primary:
-    adapter: sqlite3
-    database: storage/development_primary.sqlite3
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_DB") { "maybe_development" } %>
   cache:
     adapter: sqlite3
     database: storage/development_cache.sqlite3
@@ -22,12 +26,12 @@ development:
 
 test:
   <<: *default
-  database: storage/test.sqlite3
+  database: <%= ENV.fetch("POSTGRES_DB") { "maybe_test" } %>
 
 production:
   primary:
     <<: *default
-    database: storage/production_primary.sqlite3
+    database: <%= ENV.fetch("POSTGRES_DB") { "maybe_production" } %>
   cache:
     adapter: sqlite3
     database: storage/production_cache.sqlite3
