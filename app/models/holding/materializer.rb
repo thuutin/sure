@@ -32,7 +32,7 @@ class Holding::Materializer
       account.holdings.upsert_all(
         @holdings.map { |h| h.attributes
                .slice("date", "currency", "qty", "price", "amount", "security_id")
-               .merge("account_id" => account.id, "updated_at" => current_time) },
+               .merge("account_id" => account.id, "updated_at" => current_time, id: SecureRandom.uuid) },
         unique_by: %i[account_id security_id date currency]
       )
     end
