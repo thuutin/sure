@@ -40,7 +40,7 @@ class MobileDevice < ApplicationRecord
       .where(application: oauth_application)
       .where(resource_owner_id: user_id)
       .where(revoked_at: nil)
-    if self.class.connection.adapter_name == 'PostgreSQL'
+    if self.class.connection.adapter_name == "PostgreSQL"
       relation.where("expires_in IS NULL OR created_at + INTERVAL '1 second' * expires_in > ?", Time.current)
     else
       # SQLite/MySQL approach
