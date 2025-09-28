@@ -13,7 +13,8 @@ class MintImport < Import
         name: (row[name_col_label] || default_row_name).to_s,
         category: row[category_col_label].to_s,
         tags: row[tags_col_label].to_s,
-        notes: row[notes_col_label].to_s
+        notes: row[notes_col_label].to_s,
+        id: SecureRandom.uuid
       }
     end
 
