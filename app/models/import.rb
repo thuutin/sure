@@ -146,7 +146,8 @@ class Import < ApplicationRecord
         category: row[category_col_label].to_s,
         tags: row[tags_col_label].to_s,
         entity_type: row[entity_type_col_label].to_s,
-        notes: row[notes_col_label].to_s
+        notes: row[notes_col_label].to_s,
+        id: SecureRandom.uuid
       }
     end
 
