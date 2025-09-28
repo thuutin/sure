@@ -95,7 +95,7 @@ class Balance::ChartSeriesBuilder
 
         Balance.where(account_id: latest_dates.keys)
           .where(date: latest_dates.values)
-          .select(:account_id, :date, :end_balance, :end_cash_balance, :end_non_cash_balance, :start_balance, :start_cash_balance, :start_non_cash_balance, :flows_factor)
+          .select(:account_id, :date, :end_balance, :end_cash_balance, :end_non_cash_balance, :start_balance, :start_cash_balance, :start_non_cash_balance, :flows_factor, :cash_inflows, :cash_outflows, :non_cash_inflows, :non_cash_outflows, :net_market_flows, :cash_adjustments, :non_cash_adjustments)
           .group_by { |b| b.account_id }
           .transform_values { |balances| balances.sort_by(&:date).last }
       end
