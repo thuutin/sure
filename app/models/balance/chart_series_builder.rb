@@ -81,7 +81,7 @@ class Balance::ChartSeriesBuilder
     def balances
       @balances ||= Balance.where(account_id: account_ids)
       .where(date: period.date_range)
-      .select(:account_id, :date, :end_balance, :end_cash_balance, :end_non_cash_balance, :start_balance, :start_cash_balance, :start_non_cash_balance, :flows_factor)
+      .select("*")
       .group_by { |b| [ b.account_id, b.date ] }
       .transform_values { |balances| balances.sort_by(&:date).last }
     end

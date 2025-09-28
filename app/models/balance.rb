@@ -7,6 +7,7 @@ class Balance < ApplicationRecord
   validates :flows_factor, inclusion: { in: [ -1, 1 ] }
 
   before_save :calculate_derived_balances
+  after_initialize :calculate_derived_balances
 
   monetize :balance, :cash_balance,
            :start_cash_balance, :start_non_cash_balance, :start_balance,
@@ -32,6 +33,16 @@ class Balance < ApplicationRecord
     end
 
     def calculate_derived_balances
+      raise ArgumentError, "flows_factor is nil" if flows_factor.nil?
+      raise ArgumentError, "start_cash_balance is nil" if start_cash_balance.nil?
+      raise ArgumentError, "start_non_cash_balance is nil" if start_non_cash_balance.nil?
+      raise ArgumentError, "cash_inflows is nil" if cash_inflows.nil?
+      raise ArgumentError, "cash_outflows is nil" if cash_outflows.nil?
+      raise ArgumentError, "non_cash_inflows is nil" if non_cash_inflows.nil?
+      raise ArgumentError, "non_cash_outflows is nil" if non_cash_outflows.nil?
+      raise ArgumentError, "net_market_flows is nil" if net_market_flows.nil?
+      raise ArgumentError, "cash_adjustments is nil" if cash_adjustments.nil?
+      raise ArgumentError, "non_cash_adjustments is nil" if non_cash_adjustments.nil?
       # Calculate start_balance
       self.start_balance = start_cash_balance + start_non_cash_balance
 
