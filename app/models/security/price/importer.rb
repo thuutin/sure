@@ -58,7 +58,8 @@ class Security::Price::Importer
         security_id: security.id,
         date:        date,
         price:       chosen_price,
-        currency:    provider_currency || prev_price_currency || db_price_currency || "USD"
+        currency:    provider_currency || prev_price_currency || db_price_currency || "USD",
+        id:          SecureRandom.uuid
       }
     end
 

@@ -53,7 +53,8 @@ class ExchangeRate::Importer
         from_currency: from,
         to_currency: to,
         date: date,
-        rate: chosen_rate
+        rate: chosen_rate,
+        id: SecureRandom.uuid
       }
     end
 
