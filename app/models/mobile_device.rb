@@ -40,7 +40,7 @@ class MobileDevice < ApplicationRecord
       .where(application: oauth_application)
       .where(resource_owner_id: user_id)
       .where(revoked_at: nil)
-      .where("expires_in IS NULL OR created_at + expires_in * interval '1 second' > ?", Time.current)
+      .where("expires_in IS NULL OR created_at + expires_in.seconds > ?", Time.current)
   end
 
   def revoke_all_tokens!
