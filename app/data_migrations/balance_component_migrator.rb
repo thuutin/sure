@@ -45,11 +45,11 @@ class BalanceComponentMigrator
 
       # Verify data integrity
       # All end_balance values should match the original balance
-      invalid_count = ActiveRecord::Base.connection.select_value(<<~SQL)
-        SELECT COUNT(*)
-        FROM balances b
-        WHERE ABS(b.balance - b.end_balance) > 0.0001
-      SQL
+      balances = Balance.all
+      invalid_balances = balances.filter do |balance|
+        (balance.balance - balance.end_balance).abs > 0.0001
+      end
+      invalid_count = invalid_balances.count
 
       if invalid_count > 0
         raise "Data migration failed validation: #{invalid_count} balances have incorrect end_balance values"
