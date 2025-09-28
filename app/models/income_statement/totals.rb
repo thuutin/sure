@@ -53,7 +53,7 @@ class IncomeStatement::Totals
     def build_totals
       [ "income", "expense" ].map do |classification|
         no_category = OpenStruct.new(id: nil, parent_id: nil)
-        include_no_category = categories.to_a + [no_category]
+        include_no_category = categories.to_a + [ no_category ]
         include_no_category.map do |category|
           entries_by_category = entries.filter { |e| transactions[e.entryable_id]&.category_id == category.id && should_include_entry?(e, classification) }
           transactions_count = entries_by_category.count
