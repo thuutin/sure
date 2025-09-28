@@ -18,7 +18,9 @@ module Enrichable
     scope :enrichable, ->(attrs) {
       attrs = Array(attrs).map(&:to_s)
       json_condition = attrs.each_with_object({}) { |attr, hash| hash[attr] = true }
-      where.not(Arel.sql("#{table_name}.locked_attributes ?| array[:keys]"), keys: attrs)
+      all.select { |record|
+        attrs.none? { |attr| record.locked_attributes.key?(attr) }
+      }
     }
   end
 
