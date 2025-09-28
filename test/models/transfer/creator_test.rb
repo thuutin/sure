@@ -7,6 +7,9 @@ class Transfer::CreatorTest < ActiveSupport::TestCase
     @destination_account = accounts(:investment)
     @date = Date.current
     @amount = 100
+    Account.all.each do |account|
+      account.save! #ensure classification is set
+    end
   end
 
   test "creates basic transfer" do
