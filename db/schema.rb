@@ -10,7 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_27_190818) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_28_213010) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "accounts", id: :string, force: :cascade do |t|
     t.string "subtype"
     t.string "family_id", null: false
@@ -41,7 +44,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_27_190818) do
     t.index ["status"], name: "index_accounts_on_status"
   end
 
-  create_table "active_storage_attachments", id: :string, force: :cascade do |t|
+  create_table "active_storage_attachments", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
     t.string "record_id", null: false
@@ -51,7 +54,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_27_190818) do
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
-  create_table "active_storage_blobs", id: :string, force: :cascade do |t|
+  create_table "active_storage_blobs", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "key", null: false
     t.string "filename", null: false
     t.string "content_type"
@@ -63,7 +66,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_27_190818) do
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
-  create_table "active_storage_variant_records", id: :string, force: :cascade do |t|
+  create_table "active_storage_variant_records", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
