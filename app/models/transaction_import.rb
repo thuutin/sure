@@ -23,8 +23,10 @@ class TransactionImport < Import
             name: row.name,
             currency: row.currency,
             notes: row.notes,
-            import: self
-          )
+            import: self,
+            id: SecureRandom.uuid
+          ),
+          id: SecureRandom.uuid
         )
       end
 
