@@ -5,7 +5,6 @@ class CategoriesController < ApplicationController
 
   def index
     @categories = Current.family.categories.alphabetically
-
     render layout: "settings"
   end
 
@@ -15,8 +14,10 @@ class CategoriesController < ApplicationController
   end
 
   def create
+    if category_params[:parent_id].blank? # i don't know why this could be blank
+      category_params[:parent_id] = nil
+    end
     @category = Current.family.categories.new(category_params)
-
     if @category.save
       @transaction.update(category_id: @category.id) if @transaction
 

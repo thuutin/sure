@@ -2,10 +2,6 @@ require "application_system_test_case"
 
 class CategoriesTest < ApplicationSystemTestCase
   setup do
-    Account.all.each do |category|
-      category.save! # ensure classification is set
-    end
-
     sign_in @user = users(:family_admin)
   end
 
