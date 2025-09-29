@@ -240,8 +240,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_29_215928) do
     t.json "locked_attributes", default: {}
     t.index ["account_id", "date"], name: "index_entries_on_account_id_and_date"
     t.index ["account_id"], name: "index_entries_on_account_id"
+    t.index ["amount"], name: "index_entries_on_amount"
     t.index ["date"], name: "index_entries_on_date"
+    t.index ["entryable_id", "entryable_type"], name: "index_entries_on_entryable"
     t.index ["entryable_type"], name: "index_entries_on_entryable_type"
+    t.index ["excluded"], name: "index_entries_on_excluded"
     t.index ["import_id"], name: "index_entries_on_import_id"
     t.index ["name"], name: "index_entries_on_name"
   end
@@ -253,6 +256,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_29_215928) do
     t.date "date", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["date", "from_currency", "to_currency"], name: "index_exchange_rates_on_date_and_currencies"
     t.index ["from_currency", "to_currency", "date"], name: "index_exchange_rates_on_base_converted_date_unique", unique: true
     t.index ["from_currency"], name: "index_exchange_rates_on_from_currency"
     t.index ["to_currency"], name: "index_exchange_rates_on_to_currency"
