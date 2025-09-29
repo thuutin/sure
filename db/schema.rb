@@ -10,9 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_28_213010) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_29_215928) do
   # These are extensions that must be enabled in order to support this database
+  enable_extension "pgcrypto"
   enable_extension "plpgsql"
+
+  # Custom types defined in this database.
+  # Note that some types may not work with other database engines. Be careful if changing database.
+  create_enum "account_status", ["ok", "syncing", "error"]
 
   create_table "accounts", id: :string, force: :cascade do |t|
     t.string "subtype"
@@ -156,7 +161,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_28_213010) do
     t.index ["family_id"], name: "index_budgets_on_family_id"
   end
 
-  create_table "categories", id: :string, force: :cascade do |t|
+  create_table "categories", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "color", default: "#6172F3", null: false
     t.string "family_id", null: false
@@ -235,11 +240,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_28_213010) do
     t.json "locked_attributes", default: {}
     t.index ["account_id", "date"], name: "index_entries_on_account_id_and_date"
     t.index ["account_id"], name: "index_entries_on_account_id"
-    t.index ["amount"], name: "index_entries_on_amount"
     t.index ["date"], name: "index_entries_on_date"
-    t.index ["entryable_id", "entryable_type"], name: "index_entries_on_entryable"
     t.index ["entryable_type"], name: "index_entries_on_entryable_type"
-    t.index ["excluded"], name: "index_entries_on_excluded"
     t.index ["import_id"], name: "index_entries_on_import_id"
     t.index ["name"], name: "index_entries_on_name"
   end
@@ -251,7 +253,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_28_213010) do
     t.date "date", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["date", "from_currency", "to_currency"], name: "index_exchange_rates_on_date_and_currencies"
     t.index ["from_currency", "to_currency", "date"], name: "index_exchange_rates_on_base_converted_date_unique", unique: true
     t.index ["from_currency"], name: "index_exchange_rates_on_from_currency"
     t.index ["to_currency"], name: "index_exchange_rates_on_to_currency"
@@ -760,7 +761,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_28_213010) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["tag_id"], name: "index_taggings_on_tag_id"
-    t.index ["taggable_id", "taggable_type"], name: "index_taggings_on_taggable_id_and_type"
     t.index ["taggable_type", "taggable_id"], name: "index_taggings_on_taggable"
   end
 
