@@ -19,6 +19,8 @@ development:
     adapter: sqlite3
     database: storage/development_queue.sqlite3
     migrations_paths: db/queue_migrate
+    retries: 55
+    default_transaction_mode: IMMEDIATE
   cable:
     adapter: sqlite3
     database: storage/development_cable.sqlite3
@@ -40,6 +42,8 @@ production:
     adapter: sqlite3
     database: storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
+    retries: 55
+    default_transaction_mode: IMMEDIATE
   cable:
     adapter: sqlite3
     database: storage/production_cable.sqlite3
