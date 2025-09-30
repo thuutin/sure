@@ -2,6 +2,9 @@ default: &default
   adapter: sqlite3
   pragmas:
     foreign_keys: "ON"
+  extensions:
+    - <%= Sqlpkg.path_for("asg017/ulid") %>
+
   # adapter: postgresql
   # encoding: unicode
   # pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 3 } %>
