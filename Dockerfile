@@ -38,7 +38,8 @@ RUN bundle install \
 COPY . .
 
 # Install extra sqlite packages
-RUN bundle exec sqlpkg install asg017/ulid
+# ignore errors on aarch64-linux architecture
+RUN bundle exec sqlpkg install asg017/ulid || true 
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile -j 0 app/ lib/
