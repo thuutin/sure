@@ -89,6 +89,9 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+      
+      - name: Install extra sqlite packages
+        run: bundle exec sqlpkg install asg017/ulid
 
       - name: DB setup and smoke test
         run: |
