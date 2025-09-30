@@ -12,23 +12,19 @@ class TransactionImport < Import
 
         category = mappings.categories.mappable_for(row.category)
         tags = row.tags_list.map { |tag| mappings.tags.mappable_for(tag) }.compact
-        entry = Entry.new(
-          account: mapped_account,
-          date: row.date_iso,
-          amount: row.signed_amount,
-          name: row.name,
-          currency: row.currency,
-          notes: row.notes,
-          import: self,
-        )
-        transaction = Transaction.new(
+        Transaction.new(
           category: category,
           tags: tags,
-          entry: entry,
-        )
-        transaction.save!
-        entry.entryable = transaction
-        entry.save!
+          entry: Entry.new(
+            account: mapped_account,
+            date: row.date_iso,
+            amount: row.signed_amount,
+            name: row.name,
+            currency: row.currency,
+            notes: row.notes,
+            import: self,
+          ),
+        ).save!
       end
     end
   end
