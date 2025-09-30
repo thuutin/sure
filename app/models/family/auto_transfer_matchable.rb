@@ -3,14 +3,14 @@ module Family::AutoTransferMatchable
     Entry.select([
       "inflow_candidates.entryable_id as inflow_transaction_id",
       "outflow_candidates.entryable_id as outflow_transaction_id",
-      "ABS(inflow_candidates.date - outflow_candidates.date) as date_diff"
+      "ABS(JULIANDAY(inflow_candidates.date) - JULIANDAY(outflow_candidates.date)) as date_diff"
     ]).from("entries inflow_candidates")
       .joins("
         JOIN entries outflow_candidates ON (
           inflow_candidates.amount < 0 AND
           outflow_candidates.amount > 0 AND
           inflow_candidates.account_id <> outflow_candidates.account_id AND
-          inflow_candidates.date BETWEEN outflow_candidates.date - 4 AND outflow_candidates.date + 4
+          inflow_candidates.date BETWEEN DATE(outflow_candidates.date, '-4 days') AND DATE(outflow_candidates.date, '+4 days')
         )
       ").joins("
         LEFT JOIN transfers existing_transfers ON (
@@ -39,7 +39,7 @@ module Family::AutoTransferMatchable
           inflow_candidates.amount = -outflow_candidates.amount
         ) OR (
           inflow_candidates.currency <> outflow_candidates.currency AND
-          ABS(inflow_candidates.amount / NULLIF(outflow_candidates.amount * exchange_rates.rate, 0)) BETWEEN 0.95 AND 1.05
+          ABS(inflow_candidates.amount / CASE WHEN outflow_candidates.amount * exchange_rates.rate = 0 THEN NULL ELSE outflow_candidates.amount * exchange_rates.rate END) BETWEEN 0.95 AND 1.05
         )
       ")
       .where(existing_transfers: { id: nil })
