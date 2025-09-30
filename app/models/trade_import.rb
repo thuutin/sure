@@ -15,26 +15,25 @@ class TradeImport < Import
           ticker: row.ticker,
           exchange_operating_mic: row.exchange_operating_mic
         )
-
-        Trade.new(
-          security: security,
-          qty: row.qty,
-          currency: row.currency.presence || mapped_account.currency,
-          price: row.price,
-          entry: Entry.new(
+        entry = Entry.new(
             account: mapped_account,
             date: row.date_iso,
             amount: row.signed_amount,
             name: row.name,
             currency: row.currency.presence || mapped_account.currency,
             import: self,
-            id: SecureRandom.uuid
-          ),
-          id: SecureRandom.uuid
+          )
+        trade = Trade.new(
+          security: security,
+          qty: row.qty,
+          currency: row.currency.presence || mapped_account.currency,
+          price: row.price,
+          entry: entry,
         )
+        trade.save!
+        entry.entryable = trade
+        entry.save!
       end
-
-      Trade.import!(trades, recursive: true)
     end
   end
 
