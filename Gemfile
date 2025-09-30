@@ -128,7 +128,6 @@ gem "solid_cable", "~> 3.0"
 
 gem "mission_control-jobs", "~> 1.1"
 
-gem "activerecord-enhancedsqlite3-adapter", "~> 0.8.0"
 
 
 
