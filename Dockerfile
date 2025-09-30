@@ -37,6 +37,9 @@ RUN bundle install \
 # Copy application code
 COPY . .
 
+# Install extra sqlite packages
+RUN bundle exec sqlpkg install asg017/ulid
+
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile -j 0 app/ lib/
 
