@@ -1,16 +1,18 @@
 default: &default
-  adapter: postgresql
-  encoding: unicode
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 3 } %>
-  host: <%= ENV.fetch("DB_HOST") { "127.0.0.1" } %>
-  port: <%= ENV.fetch("DB_PORT") { "5432" } %>
-  user: <%= ENV.fetch("POSTGRES_USER") { nil } %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD") { nil } %>
+  adapter: sqlite3
+  database: storage/development_primary.sqlite3
+  # adapter: postgresql
+  # encoding: unicode
+  # pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 3 } %>
+  # host: <%= ENV.fetch("DB_HOST") { "127.0.0.1" } %>
+  # port: <%= ENV.fetch("DB_PORT") { "5432" } %>
+  # user: <%= ENV.fetch("POSTGRES_USER") { nil } %>
+  # password: <%= ENV.fetch("POSTGRES_PASSWORD") { nil } %>
 
 development:
   primary:
     <<: *default
-    database: <%= ENV.fetch("POSTGRES_DB") { "maybe_development" } %>
+    database: storage/development_primary.sqlite3
   cache:
     adapter: sqlite3
     database: storage/development_cache.sqlite3
@@ -19,6 +21,8 @@ development:
     adapter: sqlite3
     database: storage/development_queue.sqlite3
     migrations_paths: db/queue_migrate
+    retries: 55
+    default_transaction_mode: IMMEDIATE
   cable:
     adapter: sqlite3
     database: storage/development_cable.sqlite3
@@ -26,12 +30,12 @@ development:
 
 test:
   <<: *default
-  database: <%= ENV.fetch("POSTGRES_DB") { "maybe_test" } %>
+  database: storage/test_primary.sqlite3
 
 production:
   primary:
     <<: *default
-    database: <%= ENV.fetch("POSTGRES_DB") { "maybe_production" } %>
+    database: storage/production_primary.sqlite3
   cache:
     adapter: sqlite3
     database: storage/production_cache.sqlite3
@@ -40,6 +44,8 @@ production:
     adapter: sqlite3
     database: storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
+    retries: 55
+    default_transaction_mode: IMMEDIATE
   cable:
     adapter: sqlite3
     database: storage/production_cable.sqlite3
