@@ -5,6 +5,14 @@ GIT
     lucide-rails (0.2.0)
       railties (>= 4.1.0)
 
+GIT
+  remote: https://github.com/rroblak/seed_dump.git
+  revision: c2fa31924c1f725450619b30a40e94f6b2d632b4
+  specs:
+    seed_dump (3.3.1)
+      activerecord (>= 4)
+      activesupport (>= 4)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -557,9 +565,6 @@ GEM
       addressable (>= 2.3.5)
       faraday (>= 0.17.3, < 3)
     securerandom (0.4.1)
-    seed_dump (3.3.1)
-      activerecord (>= 4)
-      activesupport (>= 4)
     selenium-webdriver (4.35.0)
       base64 (~> 0.2)
       logger (~> 1.4)
@@ -731,7 +736,7 @@ DEPENDENCIES
   ruby-lsp-rails
   ruby-openai
   rubyzip (~> 2.3)
-  seed_dump (~> 3.3)
+  seed_dump!
   selenium-webdriver
   sentry-rails
   sentry-ruby

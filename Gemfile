@@ -116,7 +116,7 @@ end
 
 gem "rails_db", "~> 2.5"
 
-gem "seed_dump", "~> 3.3"
+gem "seed_dump", github: "rroblak/seed_dump"
 
 gem "solid_cache", "~> 1.0"
 
