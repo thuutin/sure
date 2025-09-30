@@ -1,6 +1,7 @@
 default: &default
   adapter: sqlite3
-  database: storage/development_primary.sqlite3
+  pragmas:
+    foreign_keys: "ON"
   # adapter: postgresql
   # encoding: unicode
   # pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 3 } %>
