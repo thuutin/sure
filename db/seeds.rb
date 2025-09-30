@@ -10,6 +10,5 @@ ActiveRecord::Base.transaction do
     puts "Loading seed file: #{File.basename(file)}"
     require file
   end
-  
   ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = ON;")
 end
