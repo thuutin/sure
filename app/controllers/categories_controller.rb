@@ -14,10 +14,12 @@ class CategoriesController < ApplicationController
   end
 
   def create
-    if category_params[:parent_id].blank? # i don't know why this could be blank
-      category_params[:parent_id] = nil
+    params = if category_params[:parent_id].blank?
+      category_params.except(:parent_id)
+    else
+      category_params
     end
-    @category = Current.family.categories.new(category_params)
+    @category = Current.family.categories.new(params)
     if @category.save
       @transaction.update(category_id: @category.id) if @transaction
 
