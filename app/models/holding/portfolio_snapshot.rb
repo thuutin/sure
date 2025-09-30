@@ -23,9 +23,8 @@ class Holding::PortfolioSnapshot
 
       # Get the most recent holding for each security and update quantities
       account.holdings
-        .select("DISTINCT ON (security_id) security_id, qty")
-        .order(:security_id, date: :desc)
-        .each { |holding| portfolio[holding.security_id] = holding.qty }
+        .group_by(&:security_id)
+        .each { |security_id, holdings| portfolio[security_id] = holdings.max_by(&:date).qty }
 
       portfolio
     end
