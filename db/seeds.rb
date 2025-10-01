@@ -4,11 +4,11 @@
 
 puts 'Run the following command to create demo data: `rake demo_data:default`' if Rails.env.development?
 
+ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = OFF;")
 ActiveRecord::Base.transaction do
-  ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = OFF;")
   Dir[Rails.root.join('db', 'seeds', '*.rb')].sort.each do |file|
     puts "Loading seed file: #{File.basename(file)}"
     require file
   end
-  ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = ON;")
 end
+ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = ON;")
