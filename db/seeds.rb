@@ -16,4 +16,3 @@ ActiveRecord::Base.transaction do
   end
 end
 ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = ON;")
-
