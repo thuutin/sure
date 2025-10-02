@@ -160,6 +160,7 @@ class Account < ApplicationRecord
       .map { |security_id| holdings.where(security_id: security_id).first.id }
 
     holdings.where(currency: currency)
+            .where.not(qty: 0)
             .where(id: holding_ids)
             .order(amount: :desc)
   end
