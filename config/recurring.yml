@@ -10,6 +10,7 @@ default: &default
     schedule: "0 22 * * 1-5" # 5:00 PM EST / 6:00 PM EDT (NY time) Monday through Friday
     description: "Imports market data daily at 5:00 PM EST (1 hour after market close)"
 
+
 production:
   <<: *default
   clean_syncs:
@@ -23,12 +24,12 @@ production:
     class: "SecurityHealthCheckJob"
     queue: "scheduled"
     description: "Runs security health checks to detect issues with security data"
-      
-  daily_seed_dump:
-      schedule: "0 2 * * *" # 2:00 AM EST / 3:00 AM EDT (NY time) Monday through Friday
-      class: "SeedDumpJob"
-      queue: "scheduled"
-      description: "Runs seed dump daily"
-
+        
+  seed_dump:
+    class: "SeedDumpJob"
+    queue: "scheduled"
+    description: "Runs seed dump manually"
+    schedule: "every month"
+    
 development:
   <<: *default
