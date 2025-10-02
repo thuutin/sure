@@ -23,6 +23,12 @@ production:
     class: "SecurityHealthCheckJob"
     queue: "scheduled"
     description: "Runs security health checks to detect issues with security data"
+      
+  daily_seed_dump:
+      schedule: "0 2 * * *" # 2:00 AM EST / 3:00 AM EDT (NY time) Monday through Friday
+      class: "SeedDumpJob"
+      queue: "scheduled"
+      description: "Runs seed dump daily"
 
 development:
   <<: *default
