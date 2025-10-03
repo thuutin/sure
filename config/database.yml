@@ -29,6 +29,8 @@ development:
 test:
   <<: *default
   database: storage/test_primary.sqlite3
+  extensions:
+    - <%= Sqlpkg.path_for("asg017/ulid") %>
 
 production:
   primary:
