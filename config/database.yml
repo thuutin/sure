@@ -9,6 +9,8 @@ development:
   primary:
     <<: *default
     database: storage/development_primary.sqlite3
+    extensions:
+      - <%= Sqlpkg.path_for("asg017/ulid") %>
   cache:
     <<: *default
     database: storage/development_cache.sqlite3
