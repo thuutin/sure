@@ -34,6 +34,8 @@ production:
   primary:
     <<: *default
     database: storage/production_primary.sqlite3
+    extensions:
+      - <%= Sqlpkg.path_for("asg017/ulid") %>
   cache:
     <<: *default
     database: storage/production_cache.sqlite3
