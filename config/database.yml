@@ -1,31 +1,25 @@
 default: &default
   adapter: sqlite3
+  retries: 55
+  default_transaction_mode: IMMEDIATE
   pragmas:
     foreign_keys: "ON"
-
-  # adapter: postgresql
-  # encoding: unicode
-  # pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 3 } %>
-  # host: <%= ENV.fetch("DB_HOST") { "127.0.0.1" } %>
-  # port: <%= ENV.fetch("DB_PORT") { "5432" } %>
-  # user: <%= ENV.fetch("POSTGRES_USER") { nil } %>
-  # password: <%= ENV.fetch("POSTGRES_PASSWORD") { nil } %>
 
 development:
   primary:
     <<: *default
     database: storage/development_primary.sqlite3
   cache:
-    adapter: sqlite3
+    <<: *default
     database: storage/development_cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
+    <<: *default
     adapter: sqlite3
     database: storage/development_queue.sqlite3
     migrations_paths: db/queue_migrate
-    retries: 55
-    default_transaction_mode: IMMEDIATE
   cable:
+    <<: *default
     adapter: sqlite3
     database: storage/development_cable.sqlite3
     migrations_paths: db/cable_migrate
@@ -39,16 +33,14 @@ production:
     <<: *default
     database: storage/production_primary.sqlite3
   cache:
-    adapter: sqlite3
+    <<: *default
     database: storage/production_cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
-    adapter: sqlite3
+    <<: *default
     database: storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
-    retries: 55
-    default_transaction_mode: IMMEDIATE
   cable:
-    adapter: sqlite3
+    <<: *default
     database: storage/production_cable.sqlite3
     migrations_paths: db/cable_migrate
