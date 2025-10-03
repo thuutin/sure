@@ -1,4 +1,5 @@
 module SQLite3Configuration
+  # see https://github.com/rails/solid_queue/issues/309
   private
     def configure_connection
       super
