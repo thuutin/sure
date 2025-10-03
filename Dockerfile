@@ -9,7 +9,7 @@ WORKDIR /rails
 
 # Install base packages
 RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y curl libvips postgresql-client libyaml-0-2 \
+    && apt-get install --no-install-recommends -y curl libvips libyaml-0-2 \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment
@@ -25,7 +25,7 @@ FROM base AS build
 
 # Install packages needed to build gems
 RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y build-essential libpq-dev git pkg-config libyaml-dev \
+    && apt-get install --no-install-recommends -y build-essential git pkg-config libyaml-dev \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
