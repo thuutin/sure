@@ -5,9 +5,6 @@ ruby file: ".ruby-version"
 # Rails
 gem "rails", "~> 7.2.2"
 
-# Drivers
-gem "pg", "~> 1.5"
-
 # Deployment
 gem "puma", ">= 5.0"
 gem "bootsnap", require: false
