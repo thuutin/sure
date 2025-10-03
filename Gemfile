@@ -3,7 +3,7 @@ source "https://rubygems.org"
 ruby file: ".ruby-version"
 
 # Rails
-gem "rails", "~> 7.2.2"
+gem "rails", "~> 8.0.3"
 
 # Deployment
 gem "puma", ">= 5.0"
@@ -124,8 +124,5 @@ gem "solid_queue", "~> 1.2"
 gem "solid_cable", "~> 3.0"
 
 gem "mission_control-jobs", "~> 1.1"
-
-
-
 
 gem "sqlpkg", "~> 0.3.0"

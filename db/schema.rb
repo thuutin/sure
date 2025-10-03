@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_30_191642) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
   create_table "accounts", id: :string, force: :cascade do |t|
     t.string "subtype"
     t.string "family_id", null: false
