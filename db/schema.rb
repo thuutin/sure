@@ -10,8 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
-  create_table "accounts", id: :string, force: :cascade do |t|
+ActiveRecord::Schema[8.0].define(version: 2025_10_08_015408) do
+  create_table "accounts", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "subtype"
     t.string "family_id", null: false
     t.string "name"
@@ -41,7 +41,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["status"], name: "index_accounts_on_status"
   end
 
-  create_table "active_storage_attachments", id: :string, default: -> { "ulid()" }, force: :cascade do |t|
+  create_table "active_storage_attachments", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
     t.string "record_id", null: false
@@ -51,7 +51,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
-  create_table "active_storage_blobs", id: :string, default: -> { "ulid()" }, force: :cascade do |t|
+  create_table "active_storage_blobs", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "key", null: false
     t.string "filename", null: false
     t.string "content_type"
@@ -63,13 +63,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
-  create_table "active_storage_variant_records", id: :string, default: -> { "ulid()" }, force: :cascade do |t|
+  create_table "active_storage_variant_records", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "addresses", id: :string, force: :cascade do |t|
+  create_table "addresses", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "addressable_type"
     t.string "addressable_id"
     t.string "line1"
@@ -84,7 +84,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 
-  create_table "api_keys", id: :string, force: :cascade do |t|
+  create_table "api_keys", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.string "user_id", null: false
     t.json "scopes"
@@ -101,7 +101,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["user_id"], name: "index_api_keys_on_user_id"
   end
 
-  create_table "balances", id: :string, force: :cascade do |t|
+  create_table "balances", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "account_id", null: false
     t.date "date", null: false
     t.decimal "balance", precision: 19, scale: 4, null: false
@@ -128,7 +128,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["account_id"], name: "index_balances_on_account_id"
   end
 
-  create_table "budget_categories", id: :string, force: :cascade do |t|
+  create_table "budget_categories", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "budget_id", null: false
     t.string "category_id", null: false
     t.decimal "budgeted_spending", precision: 19, scale: 4, null: false
@@ -140,7 +140,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["category_id"], name: "index_budget_categories_on_category_id"
   end
 
-  create_table "budgets", id: :string, force: :cascade do |t|
+  create_table "budgets", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "family_id", null: false
     t.date "start_date", null: false
     t.date "end_date", null: false
@@ -153,7 +153,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["family_id"], name: "index_budgets_on_family_id"
   end
 
-  create_table "categories", id: :string, default: -> { "ulid()" }, force: :cascade do |t|
+  create_table "categories", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "color", default: "#6172F3", null: false
     t.string "family_id", null: false
@@ -165,7 +165,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["family_id"], name: "index_categories_on_family_id"
   end
 
-  create_table "chats", id: :string, force: :cascade do |t|
+  create_table "chats", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "user_id", null: false
     t.string "title", null: false
     t.string "instructions"
@@ -176,7 +176,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["user_id"], name: "index_chats_on_user_id"
   end
 
-  create_table "credit_cards", id: :string, force: :cascade do |t|
+  create_table "credit_cards", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.decimal "available_credit", precision: 10, scale: 2
@@ -188,14 +188,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.string "subtype"
   end
 
-  create_table "cryptos", id: :string, force: :cascade do |t|
+  create_table "cryptos", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
-  create_table "data_enrichments", id: :string, force: :cascade do |t|
+  create_table "data_enrichments", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "enrichable_type", null: false
     t.string "enrichable_id", null: false
     t.string "source"
@@ -208,14 +208,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["enrichable_type", "enrichable_id"], name: "index_data_enrichments_on_enrichable"
   end
 
-  create_table "depositories", id: :string, force: :cascade do |t|
+  create_table "depositories", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
-  create_table "entries", id: :string, force: :cascade do |t|
+  create_table "entries", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "account_id", null: false
     t.string "entryable_type"
     t.string "entryable_id"
@@ -241,7 +241,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["name"], name: "index_entries_on_name"
   end
 
-  create_table "exchange_rates", id: :string, force: :cascade do |t|
+  create_table "exchange_rates", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "from_currency", null: false
     t.string "to_currency", null: false
     t.decimal "rate", null: false
@@ -254,7 +254,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["to_currency"], name: "index_exchange_rates_on_to_currency"
   end
 
-  create_table "families", id: :string, force: :cascade do |t|
+  create_table "families", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -271,7 +271,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.datetime "latest_sync_completed_at", default: -> { "CURRENT_TIMESTAMP" }
   end
 
-  create_table "family_exports", id: :string, force: :cascade do |t|
+  create_table "family_exports", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "family_id", null: false
     t.string "status", default: "pending", null: false
     t.datetime "created_at", null: false
@@ -279,7 +279,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["family_id"], name: "index_family_exports_on_family_id"
   end
 
-  create_table "holdings", id: :string, force: :cascade do |t|
+  create_table "holdings", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "account_id", null: false
     t.string "security_id", null: false
     t.date "date", null: false
@@ -294,7 +294,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["security_id"], name: "index_holdings_on_security_id"
   end
 
-  create_table "impersonation_session_logs", id: :string, force: :cascade do |t|
+  create_table "impersonation_session_logs", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "impersonation_session_id", null: false
     t.string "controller"
     t.string "action"
@@ -307,7 +307,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["impersonation_session_id"], name: "index_impersonation_session_logs_on_impersonation_session_id"
   end
 
-  create_table "impersonation_sessions", id: :string, force: :cascade do |t|
+  create_table "impersonation_sessions", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "impersonator_id", null: false
     t.string "impersonated_id", null: false
     t.string "status", default: "pending", null: false
@@ -317,7 +317,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["impersonator_id"], name: "index_impersonation_sessions_on_impersonator_id"
   end
 
-  create_table "import_mappings", id: :string, force: :cascade do |t|
+  create_table "import_mappings", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "type", null: false
     t.string "key"
     t.string "value"
@@ -331,7 +331,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["mappable_type", "mappable_id"], name: "index_import_mappings_on_mappable"
   end
 
-  create_table "import_rows", id: :string, force: :cascade do |t|
+  create_table "import_rows", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "import_id", null: false
     t.string "account"
     t.string "date"
@@ -351,7 +351,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["import_id"], name: "index_import_rows_on_import_id"
   end
 
-  create_table "imports", id: :string, force: :cascade do |t|
+  create_table "imports", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.json "column_mappings"
     t.string "status"
     t.string "raw_file_str"
@@ -384,14 +384,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["family_id"], name: "index_imports_on_family_id"
   end
 
-  create_table "investments", id: :string, force: :cascade do |t|
+  create_table "investments", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
-  create_table "invitations", id: :string, force: :cascade do |t|
+  create_table "invitations", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "email"
     t.string "role"
     t.string "token"
@@ -408,14 +408,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["token"], name: "index_invitations_on_token", unique: true
   end
 
-  create_table "invite_codes", id: :string, force: :cascade do |t|
+  create_table "invite_codes", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "token", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["token"], name: "index_invite_codes_on_token", unique: true
   end
 
-  create_table "loans", id: :string, force: :cascade do |t|
+  create_table "loans", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "rate_type"
@@ -426,7 +426,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.string "subtype"
   end
 
-  create_table "merchants", id: :string, force: :cascade do |t|
+  create_table "merchants", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "color"
     t.string "family_id"
@@ -443,7 +443,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["type"], name: "index_merchants_on_type"
   end
 
-  create_table "messages", id: :string, force: :cascade do |t|
+  create_table "messages", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "chat_id", null: false
     t.string "type", null: false
     t.string "status", default: "complete", null: false
@@ -457,7 +457,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["chat_id"], name: "index_messages_on_chat_id"
   end
 
-  create_table "mobile_devices", id: :string, force: :cascade do |t|
+  create_table "mobile_devices", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "user_id", null: false
     t.string "device_id"
     t.string "device_name"
@@ -518,21 +518,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
-  create_table "other_assets", id: :string, force: :cascade do |t|
+  create_table "other_assets", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
-  create_table "other_liabilities", id: :string, force: :cascade do |t|
+  create_table "other_liabilities", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.json "locked_attributes", default: {}
     t.string "subtype"
   end
 
-  create_table "plaid_accounts", id: :string, force: :cascade do |t|
+  create_table "plaid_accounts", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "plaid_item_id", null: false
     t.string "plaid_id", null: false
     t.string "plaid_type", null: false
@@ -552,7 +552,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["plaid_item_id"], name: "index_plaid_accounts_on_plaid_item_id"
   end
 
-  create_table "plaid_items", id: :string, force: :cascade do |t|
+  create_table "plaid_items", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "family_id", null: false
     t.string "access_token"
     t.string "plaid_id", null: false
@@ -574,7 +574,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["plaid_id"], name: "index_plaid_items_on_plaid_id", unique: true
   end
 
-  create_table "properties", id: :string, force: :cascade do |t|
+  create_table "properties", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "year_built"
@@ -584,7 +584,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.string "subtype"
   end
 
-  create_table "rejected_transfers", id: :string, force: :cascade do |t|
+  create_table "rejected_transfers", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "inflow_transaction_id", null: false
     t.string "outflow_transaction_id", null: false
     t.datetime "created_at", null: false
@@ -594,7 +594,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["outflow_transaction_id"], name: "index_rejected_transfers_on_outflow_transaction_id"
   end
 
-  create_table "rule_actions", id: :string, force: :cascade do |t|
+  create_table "rule_actions", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "rule_id", null: false
     t.string "action_type", null: false
     t.string "value"
@@ -603,7 +603,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["rule_id"], name: "index_rule_actions_on_rule_id"
   end
 
-  create_table "rule_conditions", id: :string, force: :cascade do |t|
+  create_table "rule_conditions", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "rule_id"
     t.string "parent_id"
     t.string "condition_type", null: false
@@ -615,7 +615,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["rule_id"], name: "index_rule_conditions_on_rule_id"
   end
 
-  create_table "rules", id: :string, force: :cascade do |t|
+  create_table "rules", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "family_id", null: false
     t.string "resource_type", null: false
     t.date "effective_date"
@@ -626,7 +626,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["family_id"], name: "index_rules_on_family_id"
   end
 
-  create_table "securities", id: :string, force: :cascade do |t|
+  create_table "securities", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "ticker", null: false
     t.string "name"
     t.datetime "created_at", null: false
@@ -645,7 +645,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["ticker", "exchange_operating_mic"], name: "index_securities_on_ticker_and_exchange_operating_mic_unique", unique: true
   end
 
-  create_table "security_prices", id: :string, force: :cascade do |t|
+  create_table "security_prices", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.date "date", null: false
     t.decimal "price", precision: 19, scale: 4, null: false
     t.string "currency", default: "USD", null: false
@@ -656,7 +656,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["security_id"], name: "index_security_prices_on_security_id"
   end
 
-  create_table "sessions", id: :string, force: :cascade do |t|
+  create_table "sessions", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "user_id", null: false
     t.string "user_agent"
     t.string "ip_address"
@@ -678,7 +678,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["var"], name: "index_settings_on_var", unique: true
   end
 
-  create_table "simplefin_accounts", id: :string, force: :cascade do |t|
+  create_table "simplefin_accounts", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "simplefin_item_id", null: false
     t.string "name"
     t.string "account_id"
@@ -698,7 +698,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["simplefin_item_id"], name: "index_simplefin_accounts_on_simplefin_item_id"
   end
 
-  create_table "simplefin_items", id: :string, force: :cascade do |t|
+  create_table "simplefin_items", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "family_id", null: false
     t.text "access_url"
     t.string "name"
@@ -716,7 +716,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["status"], name: "index_simplefin_items_on_status"
   end
 
-  create_table "subscriptions", id: :string, force: :cascade do |t|
+  create_table "subscriptions", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "family_id", null: false
     t.string "status", null: false
     t.string "stripe_id"
@@ -730,7 +730,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["family_id"], name: "index_subscriptions_on_family_id", unique: true
   end
 
-  create_table "syncs", id: :string, force: :cascade do |t|
+  create_table "syncs", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "syncable_type", null: false
     t.string "syncable_id", null: false
     t.string "status", default: "pending"
@@ -750,7 +750,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["syncable_type", "syncable_id"], name: "index_syncs_on_syncable"
   end
 
-  create_table "taggings", id: :string, force: :cascade do |t|
+  create_table "taggings", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "tag_id", null: false
     t.string "taggable_type"
     t.string "taggable_id"
@@ -760,7 +760,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["taggable_type", "taggable_id"], name: "index_taggings_on_taggable"
   end
 
-  create_table "tags", id: :string, force: :cascade do |t|
+  create_table "tags", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.string "color", default: "#e99537", null: false
     t.string "family_id", null: false
@@ -769,7 +769,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["family_id"], name: "index_tags_on_family_id"
   end
 
-  create_table "tool_calls", id: :string, force: :cascade do |t|
+  create_table "tool_calls", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "message_id", null: false
     t.string "provider_id", null: false
     t.string "provider_call_id"
@@ -782,7 +782,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["message_id"], name: "index_tool_calls_on_message_id"
   end
 
-  create_table "trades", id: :string, force: :cascade do |t|
+  create_table "trades", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "security_id", null: false
     t.decimal "qty", precision: 19, scale: 4
     t.decimal "price", precision: 19, scale: 4
@@ -793,7 +793,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["security_id"], name: "index_trades_on_security_id"
   end
 
-  create_table "transactions", id: :string, force: :cascade do |t|
+  create_table "transactions", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "category_id"
@@ -807,7 +807,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["merchant_id"], name: "index_transactions_on_merchant_id"
   end
 
-  create_table "transfers", id: :string, force: :cascade do |t|
+  create_table "transfers", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "inflow_transaction_id", null: false
     t.string "outflow_transaction_id", null: false
     t.string "status", default: "pending", null: false
@@ -820,7 +820,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["status"], name: "index_transfers_on_status"
   end
 
-  create_table "users", id: :string, force: :cascade do |t|
+  create_table "users", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "family_id", null: false
     t.string "first_name"
     t.string "last_name"
@@ -853,14 +853,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_03_011538) do
     t.index ["otp_secret"], name: "index_users_on_otp_secret"
   end
 
-  create_table "valuations", id: :string, force: :cascade do |t|
+  create_table "valuations", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "kind", default: "reconciliation", null: false
     t.json "locked_attributes", default: {}
   end
 
-  create_table "vehicles", id: :string, force: :cascade do |t|
+  create_table "vehicles", id: :string, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "year"
