@@ -157,7 +157,7 @@ class Account < ApplicationRecord
   def current_holdings
     holding_ids = holdings.pluck(:security_id)
       .uniq
-      .map { |security_id| holdings.where(security_id: security_id).first.id }
+      .map { |security_id| holdings.where(security_id: security_id).order(date: :desc).first.id }
 
     holdings.where(currency: currency)
             .where.not(qty: 0)
