@@ -212,13 +212,10 @@ GEM
       net-http (>= 0.5.0)
     faraday-retry (2.3.2)
       faraday (~> 2.0)
-    ffi (1.17.2)
-    ffi (1.17.2-arm-linux-gnu)
-    ffi (1.17.2-arm-linux-musl)
+    ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-arm64-darwin)
     ffi (1.17.2-x86_64-darwin)
     ffi (1.17.2-x86_64-linux-gnu)
-    ffi (1.17.2-x86_64-linux-musl)
     foreman (0.90.0)
       thor (~> 1.4)
     fugit (1.11.2)
@@ -351,7 +348,6 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
-    mini_portile2 (2.8.9)
     minitest (5.25.5)
     mission_control-jobs (1.1.0)
       actioncable (>= 7.1)
@@ -382,20 +378,13 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.4)
-    nokogiri (1.18.10)
-      mini_portile2 (~> 2.8.2)
-      racc (~> 1.4)
-    nokogiri (1.18.10-arm-linux-gnu)
-      racc (~> 1.4)
-    nokogiri (1.18.10-arm-linux-musl)
+    nokogiri (1.18.10-aarch64-linux-gnu)
       racc (~> 1.4)
     nokogiri (1.18.10-arm64-darwin)
       racc (~> 1.4)
     nokogiri (1.18.10-x86_64-darwin)
       racc (~> 1.4)
     nokogiri (1.18.10-x86_64-linux-gnu)
-      racc (~> 1.4)
-    nokogiri (1.18.10-x86_64-linux-musl)
       racc (~> 1.4)
     octokit (10.0.0)
       faraday (>= 1, < 3)
@@ -598,19 +587,14 @@ GEM
       fugit (~> 1.11.0)
       railties (>= 7.1)
       thor (>= 1.3.1)
-    sqlite3 (2.7.4)
-      mini_portile2 (~> 2.8.0)
-    sqlite3 (2.7.4-arm-linux-gnu)
-    sqlite3 (2.7.4-arm-linux-musl)
+    sqlean (0.3.0-aarch64-linux-gnu)
+    sqlean (0.3.0-arm64-darwin)
+    sqlean (0.3.0-x86_64-darwin)
+    sqlean (0.3.0-x86_64-linux-gnu)
+    sqlite3 (2.7.4-aarch64-linux-gnu)
     sqlite3 (2.7.4-arm64-darwin)
     sqlite3 (2.7.4-x86_64-darwin)
     sqlite3 (2.7.4-x86_64-linux-gnu)
-    sqlite3 (2.7.4-x86_64-linux-musl)
-    sqlpkg (0.3.0)
-    sqlpkg (0.3.0-arm64-darwin)
-    sqlpkg (0.3.0-arm64-linux)
-    sqlpkg (0.3.0-x86_64-darwin)
-    sqlpkg (0.3.0-x86_64-linux)
     stackprof (0.2.27)
     stimulus-rails (1.3.4)
       railties (>= 6.0.0)
@@ -619,11 +603,10 @@ GEM
     tailwindcss-rails (4.3.0)
       railties (>= 7.0.0)
       tailwindcss-ruby (~> 4.0)
-    tailwindcss-ruby (4.1.13)
+    tailwindcss-ruby (4.1.13-aarch64-linux-gnu)
     tailwindcss-ruby (4.1.13-arm64-darwin)
     tailwindcss-ruby (4.1.13-x86_64-darwin)
     tailwindcss-ruby (4.1.13-x86_64-linux-gnu)
-    tailwindcss-ruby (4.1.13-x86_64-linux-musl)
     terminal-table (4.0.0)
       unicode-display_width (>= 1.1.1, < 4)
     thor (1.4.0)
@@ -666,13 +649,10 @@ GEM
     zeitwerk (2.7.3)
 
 PLATFORMS
-  arm-linux-gnu
-  arm-linux-musl
+  aarch64-linux-gnu
   arm64-darwin
-  arm64-linux
   x86_64-darwin
-  x86_64-linux-gnu
-  x86_64-linux-musl
+  x86_64-linux
 
 DEPENDENCIES
   aasm
@@ -740,8 +720,8 @@ DEPENDENCIES
   solid_cable (~> 3.0)
   solid_cache (~> 1.0)
   solid_queue (~> 1.2)
+  sqlean (~> 0.3.0)
   sqlite3 (~> 2.7)
-  sqlpkg (~> 0.3.0)
   stackprof
   stimulus-rails
   stripe

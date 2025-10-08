@@ -125,4 +125,4 @@ gem "solid_cable", "~> 3.0"
 
 gem "mission_control-jobs", "~> 1.1"
 
-gem "sqlpkg", "~> 0.3.0"
+gem "sqlean", "~> 0.3.0"

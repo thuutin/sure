@@ -10,7 +10,7 @@ development:
     <<: *default
     database: storage/development_primary.sqlite3
     extensions:
-      - <%= Sqlpkg.path_for("asg017/ulid") %>
+      - <%= SQLean::UUID.to_path %>
   cache:
     <<: *default
     database: storage/development_cache.sqlite3
@@ -30,14 +30,14 @@ test:
   <<: *default
   database: storage/test_primary.sqlite3
   extensions:
-    - <%= Sqlpkg.path_for("asg017/ulid") %>
+    - <%= SQLean::UUID.to_path %>
 
 production:
   primary:
     <<: *default
     database: storage/production_primary.sqlite3
     extensions:
-      - <%= Sqlpkg.path_for("asg017/ulid") %>
+      - <%= SQLean::UUID.to_path %>
   cache:
     <<: *default
     database: storage/production_cache.sqlite3
