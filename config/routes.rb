@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   mount Lookbook::Engine, at: "/design-system"
 
   mount MissionControl::Jobs::Engine, at: "/jobs"
+  mount Litestream::Engine, at: "/litestream" if Rails.env.production?
 
   # AI chats
   resources :chats do

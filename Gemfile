@@ -126,3 +126,5 @@ gem "solid_cable", "~> 3.0"
 gem "mission_control-jobs", "~> 1.1"
 
 gem "sqlean", "~> 0.3.0"
+
+gem "litestream", "~> 0.14.0"
