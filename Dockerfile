@@ -24,8 +24,9 @@ ENV RAILS_ENV="production" \
 FROM base AS build
 
 # Install packages needed to build gems
+# procps package is needed for litestream because it uses the ps command internally
 RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y build-essential git pkg-config libyaml-dev \
+    && apt-get install --no-install-recommends -y build-essential git pkg-config libyaml-dev procps \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
