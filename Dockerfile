@@ -8,8 +8,9 @@ FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim AS base
 WORKDIR /rails
 
 # Install base packages
+# procps package is needed for litestream because it uses the ps command internally
 RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y curl libvips libyaml-0-2 \
+    && apt-get install --no-install-recommends -y curl libvips libyaml-0-2 procps \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment
@@ -24,9 +25,8 @@ ENV RAILS_ENV="production" \
 FROM base AS build
 
 # Install packages needed to build gems
-# procps package is needed for litestream because it uses the ps command internally
 RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y build-essential git pkg-config libyaml-dev procps \
+    && apt-get install --no-install-recommends -y build-essential git pkg-config libyaml-dev \
     && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
