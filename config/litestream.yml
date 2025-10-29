@@ -18,3 +18,4 @@ dbs:
         path: storage/production_primary.sqlite3
         access-key-id: $LITESTREAM_ACCESS_KEY_ID
         secret-access-key: $LITESTREAM_SECRET_ACCESS_KEY
+        validation-interval: 24h
