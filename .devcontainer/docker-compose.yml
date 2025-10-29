@@ -1,13 +1,5 @@
-x-db-env: &db_env
-  POSTGRES_USER: postgres
-  POSTGRES_DB: postgres
-  POSTGRES_PASSWORD: postgres
-
 x-rails-env: &rails_env
-  DB_HOST: db
   HOST: "0.0.0.0"
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
   BUNDLE_PATH: /bundle
 
 services:
@@ -24,18 +16,6 @@ services:
     command: sleep infinity
     environment:
       <<: *rails_env
-    depends_on:
-      - db
-  db:
-    image: postgres:latest
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-    environment:
-      <<: *db_env
 
 volumes:
-  postgres-data:
   bundle_cache:

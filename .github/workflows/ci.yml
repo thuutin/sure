@@ -76,7 +76,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     env:
       PLAID_CLIENT_ID: foo
       PLAID_SECRET: bar
@@ -84,7 +84,7 @@ jobs:
 
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libvips postgresql-client libpq-dev
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libvips
 
       - name: Checkout code
         uses: actions/checkout@v4
