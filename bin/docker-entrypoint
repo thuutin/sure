@@ -2,6 +2,7 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
+  ./bin/rails litestream:restore -- --database=storage/production_primary.sqlite3 --if-db-not-exists
   ./bin/rails db:prepare
 fi
 
