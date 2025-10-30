@@ -180,6 +180,7 @@ class Provider::TwelveData < Provider
       end
 
       parsed = JSON.parse(response.body)
+      meta = parsed.dig("meta")
       if !parsed.dig("code").nil?
         Rails.logger.warn("#{self.class.name} returned invalid price data for security #{symbol} between #{start_date} and #{end_date}.")
         raise InvalidSecurityPriceError.new("Could not fetch security prices for #{symbol} between #{start_date} and #{end_date}, response: #{response.body}")
@@ -196,7 +197,7 @@ class Provider::TwelveData < Provider
           symbol: symbol,
           date: date.to_date,
           price: price,
-          currency: parsed.dig("currency"),
+          currency: meta.dig("currency"),
           exchange_operating_mic: exchange_operating_mic
         )
       end.compact
