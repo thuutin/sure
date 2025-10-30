@@ -117,10 +117,10 @@ class Security::Price::Importer
     end
 
     def start_price_value
-      provider_price_value = provider_prices.select { |date, _| date <= start_date }
+      provider_price_value = provider_prices.select { |date, _| date <= effective_start_date }
                                             .max_by { |date, _| date }
                                             &.last&.price
-      db_price_value       = db_prices[start_date]&.price
+      db_price_value       = db_prices[effective_start_date]&.price
       provider_price_value || db_price_value
     end
 
