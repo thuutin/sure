@@ -33,18 +33,20 @@ class MobileDevice < ApplicationRecord
     app
   end
 
-  def active_tokens
+  def revoke_all_tokens!
     return Doorkeeper::AccessToken.none unless oauth_application
 
-    Doorkeeper::AccessToken
+    tokens = Doorkeeper::AccessToken
       .where(application: oauth_application)
       .where(resource_owner_id: user_id)
       .where(revoked_at: nil)
-      .where("expires_in IS NULL OR created_at + expires_in.seconds > ?", Time.current)
-  end
-
-  def revoke_all_tokens!
-    active_tokens.update_all(revoked_at: Time.current)
+      .all
+    tokens.each do |token|
+      if token.expires_in.nil? || token.created_at + token.expires_in.seconds > Time.current
+        token.revoked_at = Time.current
+        token.save!
+      end
+    end
   end
 
   private
