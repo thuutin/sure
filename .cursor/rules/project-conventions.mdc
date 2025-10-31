@@ -14,7 +14,7 @@ This rule serves as high-level documentation for how you should write code in th
   - TailwindCSS for styles
   - Lucide Icons for icons
   - OpenAI for AI chat
-- Database: PostgreSQL
+- Database: Sqlite3
 - Jobs: SolidQueue
 - External
   - Payments: Stripe

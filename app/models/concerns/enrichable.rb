@@ -17,18 +17,10 @@ module Enrichable
   included do
     scope :enrichable, ->(attrs) {
       attrs = Array(attrs).map(&:to_s)
-      adapter = connection.adapter_name.downcase
-      if adapter.include?("sqlite")
-        # SQLite uses -> '$.attr' for JSON extraction
-        where(
-          attrs.map { |attr| "#{table_name}.locked_attributes ->> '$.#{attr}' IS NULL" }.join(" AND ")
-        )
-      else
-        # Assume Postgres: use ->> 'attr' for JSONB extraction
-        where(
-          attrs.map { |attr| "#{table_name}.locked_attributes ->> '#{attr}' IS NULL" }.join(" AND ")
-        )
-      end
+      # SQLite uses -> '$.attr' for JSON extraction
+      where(
+        attrs.map { |attr| "#{table_name}.locked_attributes ->> '$.#{attr}' IS NULL" }.join(" AND ")
+      )
     }
   end
 

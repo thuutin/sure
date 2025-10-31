@@ -36,17 +36,11 @@ class MobileDevice < ApplicationRecord
   def active_tokens
     return Doorkeeper::AccessToken.none unless oauth_application
 
-    relation = Doorkeeper::AccessToken
+    Doorkeeper::AccessToken
       .where(application: oauth_application)
       .where(resource_owner_id: user_id)
       .where(revoked_at: nil)
-    if self.class.connection.adapter_name == "PostgreSQL"
-      relation.where("expires_in IS NULL OR created_at + INTERVAL '1 second' * expires_in > ?", Time.current)
-    else
-      # SQLite/MySQL approach
-      relation.where("expires_in IS NULL OR created_at + expires_in.seconds > ?", Time.current)
-    end
-    relation
+      .where("expires_in IS NULL OR created_at + expires_in.seconds > ?", Time.current)
   end
 
   def revoke_all_tokens!
