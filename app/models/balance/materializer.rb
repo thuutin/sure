@@ -66,7 +66,7 @@ class Balance::Materializer
                       "net_market_flows",
                       "cash_adjustments", "non_cash_adjustments",
                       "flows_factor")
-               .merge("updated_at" => current_time, id: SecureRandom.uuid) },
+               .merge("updated_at" => current_time) },
         unique_by: %i[account_id date currency]
       )
     end

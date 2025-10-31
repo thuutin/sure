@@ -13,8 +13,7 @@ class MintImport < Import
         name: (row[name_col_label] || default_row_name).to_s,
         category: row[category_col_label].to_s,
         tags: row[tags_col_label].to_s,
-        notes: row[notes_col_label].to_s,
-        id: SecureRandom.uuid
+        notes: row[notes_col_label].to_s
       }
     end
 
@@ -37,9 +36,7 @@ class MintImport < Import
           currency: row.currency,
           notes: row.notes,
           entryable: Transaction.new(category: category, tags: tags),
-          import: self,
-          id: SecureRandom.uuid
-
+          import: self
         entry.save!
       end
     end
