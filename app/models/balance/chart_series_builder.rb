@@ -70,12 +70,14 @@ class Balance::ChartSeriesBuilder
     end
 
     def exchange_rates
-      @exchange_rates ||= ExchangeRate.where(date: period.date_range)
-      .and(ExchangeRate.where(to_currency: currency))
-      .and(ExchangeRate.where(from_currency: accounts.pluck(:currency).uniq))
-      .select(:id, :date, :rate, :from_currency, :to_currency)
-      .group_by { |er| [ er.from_currency, er.to_currency ] }
-      .transform_values { |rates| rates.sort_by(&:date).reverse }
+      @exchange_rates ||= begin
+        ExchangeRate.where(date: (period.start_date - 30.days)..period.end_date) # extend the range so exchange rates are likely to be available
+          .and(ExchangeRate.where(to_currency: currency))
+          .and(ExchangeRate.where(from_currency: accounts.pluck(:currency).uniq))
+          .select(:id, :date, :rate, :from_currency, :to_currency)
+          .group_by { |er| [ er.from_currency, er.to_currency ] }
+          .transform_values { |rates| rates.sort_by(&:date).reverse }
+      end
     end
 
     def balances
