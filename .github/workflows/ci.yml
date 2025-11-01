@@ -102,7 +102,7 @@ jobs:
           bin/rails db:seed
 
       - name: Unit and integration tests
-        run: bin/rails test:all
+        run: bin/rails test
 
       - name: System tests
         run: bin/rails test:system
