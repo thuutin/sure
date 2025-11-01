@@ -105,7 +105,7 @@ jobs:
         run: bin/rails test
 
       - name: System tests
-        run: DISABLE_PARALLELIZATION=true bin/rails test:system
+        run: bin/rails test:system
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
