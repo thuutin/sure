@@ -78,13 +78,11 @@ jobs:
     timeout-minutes: 10
 
     env:
-      PLAID_CLIENT_ID: foo
-      PLAID_SECRET: bar
       RAILS_ENV: test
 
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libvips
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y curl libvips
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -103,6 +101,26 @@ jobs:
 
       - name: Unit and integration tests
         run: bin/rails test
+
+  system-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      RAILS_ENV: test
+
+    steps:
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libvips
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
 
       - name: System tests
         run: bin/rails test:system
