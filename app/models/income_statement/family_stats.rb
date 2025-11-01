@@ -37,17 +37,28 @@ class IncomeStatement::FamilyStats
       end
     end
 
-    def rates
+    def exchange_rates
       @rates ||= begin
         entries = entry_by_intervals.values.flatten
         currencies = entries.map { |e| e.currency }.uniq
         min_date = entries.minimum(:date)
         max_date = entries.maximum(:date)
-        ExchangeRate.where(from_currency: currencies, to_currency: @family.currency, date: min_date..max_date)
-        .select(:from_currency, :to_currency, :date, :rate)
-        .group_by { |r| [ r.from_currency, r.to_currency, r.date ] }
-        .transform_values { |r| r.first.rate }
+        ExchangeRate.where(date: (min_date - 30.days)..max_date) # extend the range so exchange rates are likely to be available
+          .and(ExchangeRate.where(to_currency: @family.currency))
+          .and(ExchangeRate.where(from_currency: currencies))
+          .select(:id, :date, :rate, :from_currency, :to_currency)
+          .group_by { |er| [ er.from_currency, er.to_currency ] }
+          .transform_values { |rates| rates.sort_by(&:date).reverse }
       end
+    end
+
+    def rate_for(from, to, date)
+      if from == to
+        return 1
+      end
+      rates = exchange_rates.dig([ from, to ]) || []
+      closest_rate = rates.bsearch { |rate| rate.date <= date }
+      closest_rate&.rate || 1
     end
 
     def median_for(entries)
@@ -75,7 +86,7 @@ class IncomeStatement::FamilyStats
         sum_amount_by_intervals = entry_by_intervals
           .transform_values { |entries| entries.filter { |e| should_include_entry?(e, classification) } }
           .transform_values { |entries|
-            entries = entries.map { |e| e.amount * (rates[[ e.currency, @family.currency, e.date ]] || 1) }
+            entries = entries.map { |e| e.amount * (rate_for(e.currency, @family.currency, e.date)) }
             entries.sum.abs
           }
           .values

@@ -29,15 +29,26 @@ class IncomeStatement::Totals
       @categories ||= Category.where(id: transactions.values.map { |t| t.category_id }.uniq).select(:id, :parent_id)
     end
 
-    def rates
+    def rate_for(from, to, date)
+      if from == to
+        return 1
+      end
+      rates = exchange_rates.dig([ from, to ]) || []
+      closest_rate = rates.bsearch { |rate| rate.date <= date }
+      closest_rate&.rate || 1
+    end
+
+    def exchange_rates
       @rates ||= begin
         currencies = entries.map { |e| e.currency }.uniq
         min_date = entries.minimum(:date)
         max_date = entries.maximum(:date)
-        ExchangeRate.where(from_currency: currencies, to_currency: @family.currency, date: min_date..max_date)
-        .select(:from_currency, :to_currency, :date, :rate)
-        .group_by { |r| [ r.from_currency, r.to_currency, r.date ] }
-        .transform_values { |r| r.first.rate }
+        ExchangeRate.where(date: (min_date - 30.days)..max_date) # extend the range so exchange rates are likely to be available
+          .and(ExchangeRate.where(to_currency: @family.currency))
+          .and(ExchangeRate.where(from_currency: currencies))
+          .select(:id, :date, :rate, :from_currency, :to_currency)
+          .group_by { |er| [ er.from_currency, er.to_currency ] }
+          .transform_values { |rates| rates.sort_by(&:date).reverse }
       end
     end
 
@@ -59,7 +70,7 @@ class IncomeStatement::Totals
           transactions_count = entries_by_category.count
           total = 0
           entries_by_category.each do |e|
-            total += e.amount * (rates[[ e.currency, @family.currency, e.date ]] || 1)
+            total += e.amount * (rate_for(e.currency, @family.currency, e.date) || 1)
           end
           TotalsRow.new(
             parent_category_id: category.parent_id,
