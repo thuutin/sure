@@ -101,11 +101,8 @@ jobs:
           bin/rails db:schema:load
           bin/rails db:seed
 
-      - name: Unit and integration tests
-        run: bin/rails test
-
-      - name: System tests
-        run: bin/rails test:system
+      - name: Unit and integration tests and system tests
+        run: bin/rails test:all
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
