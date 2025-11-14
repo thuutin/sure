@@ -41,6 +41,8 @@ module Maybe
 
     # Enable Rack::Attack middleware for API rate limiting
     config.middleware.use Rack::Attack
+
+    config.mission_control.jobs.http_basic_auth_enabled = false if Rails.env.development?
     MissionControl::Jobs.http_basic_auth_user = "jobs" if Rails.env.production?
     MissionControl::Jobs.http_basic_auth_password = ENV["MISSION_CONTROL_JOBS_PASSWORD"] || "jobs" if Rails.env.production?
   end
