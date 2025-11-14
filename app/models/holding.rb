@@ -27,19 +27,23 @@ class Holding < ApplicationRecord
 
   # Basic approximation of cost-basis
   def avg_cost
-    avg_cost = account.trades
-      .with_entry
-      .joins(ActiveRecord::Base.sanitize_sql_array([
-        "LEFT JOIN exchange_rates ON (
-          exchange_rates.date = entries.date AND
-          exchange_rates.from_currency = trades.currency AND
-          exchange_rates.to_currency = ?
-        )", account.currency
-      ]))
-      .where(security_id: security.id)
-      .where("trades.qty > 0 AND entries.date <= ?", date)
-      .average("trades.price * COALESCE(exchange_rates.rate, 1)")
-
+    avg_cost = begin
+      trades = account.trades
+        .with_entry
+        .where(security_id: security.id)
+        .where("trades.qty > 0 AND entries.date <= ?", date)
+      if trades.empty?
+        nil
+      else
+        rates = ExchangeRate.where(date: trades.pluck("entries.date"), from_currency: trades.pluck(:currency), to_currency: account.currency)
+        cost = 0
+        trades.each do |trade|
+          rate = rates.find { |r| r.date == trade.date && r.from_currency == trade.currency && r.to_currency == account.currency }
+          cost += trade.price * trade.qty * (rate&.rate || 1)
+        end
+        cost / trades.sum(:qty)
+      end
+    end
     Money.new(avg_cost || price, currency)
   end
 
