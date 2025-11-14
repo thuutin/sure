@@ -46,7 +46,7 @@ class ExchangeRate::Importer
       if chosen_rate.nil?
         chosen_rate = prev_rate_value
       end
-      if chosen_rate.nil? || chosen_rate == 0 || chosen_rate.abs < 0.0001
+      if chosen_rate.nil? || chosen_rate == 0 || chosen_rate.to_f.abs < 0.0001
         raise "chosen_rate is nil or 0 for #{from} to #{to} on #{date}, prev_rate_value: #{prev_rate_value.inspect}, provider_rate_value: #{provider_rate_value.inspect}, db_rate_value: #{db_rate_value.inspect}, clear_cache: #{clear_cache.inspect}"
       end
       prev_rate_value = chosen_rate
