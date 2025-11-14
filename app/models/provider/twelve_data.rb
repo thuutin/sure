@@ -217,23 +217,21 @@ class Provider::TwelveData < Provider
     end
 
     def client
-      @client ||= Faraday.new(url: base_url) do |faraday|
-        faraday.request(:retry, {
+      @client ||= Faraday.new(url: base_url) do |builder|
+        builder.request(:retry, {
           max: 2,
-          interval: 0.05,
-          interval_randomness: 0.5,
-          backoff_factor: 2,
-          exceptions: [ Faraday::TooManyRequestsError, Faraday::RetriableResponse ],
-          retry_statuses: [ 429 ],
           retry_block: ->(env, _, retries, _) {
             # Sleep between 1-10 minutes when retrying
             sleep(60 + rand(540))
+          },
+          retry_if: ->(env, exception) {
+            env.body[:code] == 429
           }
         })
 
-        faraday.request :json
-        faraday.response :raise_error
-        faraday.headers["Authorization"] = "apikey #{api_key}"
+        builder.request :json
+        builder.response :raise_error
+        builder.headers["Authorization"] = "apikey #{api_key}"
       end
     end
 end
