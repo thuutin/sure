@@ -85,7 +85,12 @@ class Provider::TwelveData < Provider
       Rails.logger.warn("#{self.class.name} returned invalid rate data for pair from: #{from} to: #{to} between: #{start_date} and #{end_date}, response: #{response.body}")
       fetch_exchange_cross_rates(from:, to:, start_date:, end_date:)
     end
-    parsed.dig("values")
+    data = parsed.dig("values")
+    if data.nil?
+      Rails.logger.warn("#{self.class.name} returned invalid rate data for pair from: #{from} to: #{to} between: #{start_date} and #{end_date}, response: #{response.body}")
+      raise InvalidExchangeRateError.new("Could not fetch exchange rates for #{from}/#{to} between #{start_date} and #{end_date}, response: #{response.body}")
+    end
+    data
   end
 
   def fetch_exchange_rates(from:, to:, start_date:, end_date:)
