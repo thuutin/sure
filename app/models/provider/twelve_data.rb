@@ -221,8 +221,8 @@ class Provider::TwelveData < Provider
         builder.request(:retry, {
           max: 2,
           retry_block: ->(env, _, retries, _) {
-            # Sleep between 1-10 minutes when retrying
-            sleep(60 + rand(540))
+            # Sleep between 1-4 minutes when retrying
+            sleep(60 + rand(180))
           },
           retry_if: ->(env, exception) {
             env.body[:code] == 429
