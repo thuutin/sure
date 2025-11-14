@@ -85,7 +85,7 @@ class ExchangeRate::Importer
 
     # Since provider may not return values on weekends and holidays, we grab the first rate from the provider that is on or before the start date
     def start_rate_value
-      provider_rate_value = provider_rates.select { |date, _| date <= start_date }.max_by { |date, _| date }&.last
+      provider_rate_value = provider_rates.select { |date, _| date <= start_date }.max_by { |date, _| date }&.last&.rate
       db_rate_value = db_rates[start_date]&.rate
       provider_rate_value || db_rate_value
     end
