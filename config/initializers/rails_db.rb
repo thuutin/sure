@@ -13,13 +13,13 @@ if Object.const_defined?("RailsDb")
     # config.white_list_tables = [ "posts", "comments" ]
 
     # # Enable http basic authentication
-    config.http_basic_authentication_enabled = true
+    config.http_basic_authentication_enabled = true if Rails.env.production?
 
     # # Enable http basic authentication
-    config.http_basic_authentication_user_name = "rails_db"
+    config.http_basic_authentication_user_name = "rails_db" if Rails.env.production?
 
     # # Enable http basic authentication
-    config.http_basic_authentication_password = ENV.fetch("RAILS_DB_PASSWORD", "rails_db")
+    config.http_basic_authentication_password = ENV.fetch("RAILS_DB_PASSWORD", "rails_db") if Rails.env.production?
 
     # # Enable verify access proc
     # config.verify_access_proc = proc { |controller| true }
