@@ -3,7 +3,7 @@ source "https://rubygems.org"
 ruby file: ".ruby-version"
 
 # Rails
-gem "rails", "~> 8.0.4"
+gem "rails", "~> 8.1.1"
 
 # Deployment
 gem "puma", ">= 5.0"
