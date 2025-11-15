@@ -3,24 +3,25 @@ class WebhooksController < ApplicationController
   skip_authentication
 
   def plaid
-    webhook_body = request.body.read
-    plaid_verification_header = request.headers["Plaid-Verification"]
+    Rails.error.handle(fallback: -> {
+      render json: { error: "Invalid webhook:" }, status: :bad_request
+    }) do
+      webhook_body = request.body.read
+      plaid_verification_header = request.headers["Plaid-Verification"]
 
-    client = Provider::Registry.plaid_provider_for_region(:us)
+      client = Provider::Registry.plaid_provider_for_region(:us)
 
-    client.validate_webhook!(plaid_verification_header, webhook_body)
+      client.validate_webhook!(plaid_verification_header, webhook_body)
 
-    PlaidItem::WebhookProcessor.new(webhook_body).process
+      PlaidItem::WebhookProcessor.new(webhook_body).process
 
-    render json: { received: true }, status: :ok
-  rescue => error
-    Sentry.capture_exception(error)
-    render json: { error: "Invalid webhook: #{error.message}" }, status: :bad_request
+      render json: { received: true }, status: :ok
+    end
   end
 
   def plaid_eu
     Rails.error.handle(fallback: -> {
-      render json: { error: "Invalid webhook: #{error.message}" }, status: :bad_request
+      render json: { error: "Invalid webhook" }, status: :bad_request
     }) do
       webhook_body = request.body.read
       plaid_verification_header = request.headers["Plaid-Verification"]
