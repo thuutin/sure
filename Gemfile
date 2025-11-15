@@ -128,3 +128,5 @@ gem "mission_control-jobs", "~> 1.1"
 gem "sqlean", "~> 0.3.0"
 
 gem "litestream", "~> 0.14.0"
+
+gem "honeybadger", "~> 6.1"
