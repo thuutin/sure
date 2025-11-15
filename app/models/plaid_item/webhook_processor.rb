@@ -31,7 +31,7 @@ class PlaidItem::WebhookProcessor
     end
   rescue => e
     # To always ensure we return a 200 to Plaid (to keep endpoint healthy), silently capture and report all errors
-    Sentry.capture_exception(e)
+    Rails.error.report(e)
   end
 
   private

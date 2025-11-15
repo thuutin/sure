@@ -5,7 +5,6 @@ module ApplicationCable
     private
       def report_error(e)
         Rails.error.report(error)
-        Sentry.capture_exception(error) # TODO: Remove this once we've migrated to Rails.error
       end
   end
 end

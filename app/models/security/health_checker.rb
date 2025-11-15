@@ -55,9 +55,7 @@ class Security::HealthChecker
       handle_failure
     end
   rescue => e
-    Sentry.capture_exception(e) do |scope|
-      scope.set_tags(security_id: @security.id)
-    end
+    Rails.error.report(e, context: { security_id: @security.id })
   ensure
     security.update!(last_health_check_at: Time.current)
   end
