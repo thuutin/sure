@@ -61,14 +61,14 @@ class Sync < ApplicationRecord
     Rails.event.tagged("Sync", id, syncable_type, syncable_id) do
       # This can happen on server restarts or if ~~Sidekiq~~ SolidQueue enqueues a duplicate job
       unless may_start?
-        Rails.event.notify("Sync", id, syncable_type, syncable_id, "not in a valid state to start")
+        Rails.event.notify("Sync", { id: id, syncable_type: syncable_type, syncable_id: syncable_id, message: "not in a valid state to start" })
         return
       end
 
       start!
 
       begin
-        Rails.event.notify("Performing sync", syncable_type: syncable_type, syncable_id: syncable.id)
+        Rails.event.notify("Performing sync", { syncable_type: syncable_type, syncable_id: syncable.id })
         syncable.perform_sync(self)
       rescue => e
         fail!
@@ -141,11 +141,11 @@ class Sync < ApplicationRecord
     end
 
     def perform_post_sync
-      Rails.event.notify("Performing post-sync", syncable_type: syncable_type, syncable_id: syncable.id)
+      Rails.event.notify("Performing post-sync", { syncable_type: syncable_type, syncable_id: syncable.id })
       syncable.perform_post_sync
       syncable.broadcast_sync_complete
     rescue => e
-      Rails.event.notify("Error performing post-sync", syncable_type: syncable_type, syncable_id: syncable.id, error: e.message)
+      Rails.event.notify("Error performing post-sync", { syncable_type: syncable_type, syncable_id: syncable.id, error: e.message })
       report_error(e)
     end
 
