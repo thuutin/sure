@@ -157,9 +157,9 @@ class Sync < ApplicationRecord
       todays_sync_count = syncable.syncs.where(created_at: Date.current.all_day).count
 
       if todays_sync_count > 100
-        Sentry.capture_exception(
+        Rails.error.report(
           Error.new("#{syncable_type} (#{syncable.id}) has exceeded 10 syncs today (count: #{todays_sync_count})"),
-          level: :warning
+          context: { count: todays_sync_count, syncable_type: syncable_type, syncable_id: syncable.id }
         )
       end
     end
