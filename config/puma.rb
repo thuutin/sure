@@ -55,9 +55,6 @@ plugin :tmp_restart
 # Run the Solid Queue supervisor inside of Puma for single-server deployments
 plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"] || rails_env == "development"
 litestream_enabled = ENV["LITESTREAM_ENABLED"] == "true" && rails_env == "production"
-puts "Litestream enabled env var: #{ENV["LITESTREAM_ENABLED"] }"
-puts "Rails environment: #{rails_env}"
-puts "Litestream enabled: #{litestream_enabled}"
 plugin :litestream if litestream_enabled
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
