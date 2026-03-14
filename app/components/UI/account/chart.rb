@@ -58,12 +58,34 @@ class UI::Account::Chart < ApplicationComponent
     account.balance_money.exchange_to(account.family.currency, fallback_rate: 1)
   end
 
+  def primary_series
+    @primary_series ||= account.balance_series(period: period, view: view)
+  end
+
+  def secondary_series
+    return nil unless foreign_currency?
+
+    @secondary_series ||= account.balance_series(
+      period: period,
+      view: view,
+      currency: account.family.currency
+    )
+  end
+
+  def primary_series_label
+    account.currency
+  end
+
+  def secondary_series_label
+    "#{account.family.currency} equivalent"
+  end
+
   def view
     @view ||= "balance"
   end
 
   def series
-    account.balance_series(period: period, view: view)
+    primary_series
   end
 
   def trend

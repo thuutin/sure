@@ -41,13 +41,32 @@
       <%= render partial: "shared/trend_change", locals: { trend: trend, comparison_label: period.comparison_label } %>
     </div>
 
+    <% if secondary_series.present? %>
+      <div class="px-4 flex items-center gap-4 text-xs font-medium text-secondary">
+        <div class="flex items-center gap-2">
+          <span class="inline-block h-0.5 w-5 rounded-full" style="background-color: <%= trend.color %>"></span>
+          <span><%= primary_series_label %></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-5 border-t-2 border-dashed border-secondary"></span>
+          <span><%= secondary_series_label %></span>
+        </div>
+      </div>
+    <% end %>
+
     <div class="h-64 pb-4">
       <% if series.any? %>
         <div
         id="lineChart"
         class="w-full h-full"
         data-controller="time-series-chart"
-        data-time-series-chart-data-value="<%= series.to_json %>"></div>
+        data-time-series-chart-data-value="<%= series.to_json %>"
+        <% if secondary_series.present? %>
+        data-time-series-chart-primary-series-label-value="<%= primary_series_label %>"
+        data-time-series-chart-secondary-data-value="<%= secondary_series.to_json %>"
+        data-time-series-chart-secondary-series-label-value="<%= secondary_series_label %>"
+        <% end %>></div>
       <% else %>
         <div class="w-full h-full flex items-center justify-center">
           <p class="text-secondary text-sm">No data available</p>
