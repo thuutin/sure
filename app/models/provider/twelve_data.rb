@@ -47,7 +47,16 @@ class Provider::TwelveData < Provider
         req.params["date"] = date.to_s
       end
 
-      rate = JSON.parse(response.body).dig("rate")
+      parsed = JSON.parse(response.body)
+      validate_exchange_rate_symbol!(
+        parsed: parsed,
+        from: from,
+        to: to,
+        context: "on #{date}",
+        response_body: response.body
+      )
+
+      rate = parsed.dig("rate")
       if rate.nil?
         Rails.logger.warn("#{self.class.name} returned invalid rate data for pair from: #{from} to: #{to} on: #{date}, response: #{response.body}")
         raise InvalidExchangeRateError.new("Could not fetch exchange rate for #{from}/#{to} on #{date}, response: #{response.body}")
@@ -55,6 +64,7 @@ class Provider::TwelveData < Provider
       Rate.new(date: date.to_date, from:, to:, rate: rate)
     end
   end
+
   def fetch_exchange_cross_rates(from:, to:, start_date:, end_date:)
     # Add a random delay to avoid rate limiting
     sleep(rand(60..300))
@@ -65,7 +75,17 @@ class Provider::TwelveData < Provider
       req.params["end_date"] = end_date.to_s
       req.params["interval"] = "1day"
     end
-    data = JSON.parse(response.body).dig("values")
+    parsed = JSON.parse(response.body)
+    validate_exchange_cross_metadata!(
+      parsed: parsed,
+      from: from,
+      to: to,
+      start_date: start_date,
+      end_date: end_date,
+      response_body: response.body
+    )
+
+    data = parsed.dig("values")
     if data.nil?
       Rails.logger.warn("#{self.class.name} returned invalid rate data for pair from: #{from} to: #{to} between: #{start_date} and #{end_date}, response: #{response.body}")
       raise InvalidExchangeRateError.new("Could not fetch exchange rates for #{from}/#{to} between #{start_date} and #{end_date}, response: #{response.body}")
@@ -83,8 +103,16 @@ class Provider::TwelveData < Provider
     parsed = JSON.parse(response.body)
     if parsed.dig("code") == 404
       Rails.logger.warn("#{self.class.name} returned invalid rate data for pair from: #{from} to: #{to} between: #{start_date} and #{end_date}, response: #{response.body}")
-      fetch_exchange_cross_rates(from:, to:, start_date:, end_date:)
+      return fetch_exchange_cross_rates(from:, to:, start_date:, end_date:)
     end
+    validate_exchange_rate_symbol!(
+      parsed: parsed.dig("meta") || parsed,
+      from: from,
+      to: to,
+      context: "between #{start_date} and #{end_date}",
+      response_body: response.body
+    )
+
     data = parsed.dig("values")
     if data.nil?
       Rails.logger.warn("#{self.class.name} returned invalid rate data for pair from: #{from} to: #{to} between: #{start_date} and #{end_date}, response: #{response.body}")
@@ -211,6 +239,40 @@ class Provider::TwelveData < Provider
 
   private
     attr_reader :api_key
+
+    def validate_exchange_rate_symbol!(parsed:, from:, to:, context:, response_body:)
+      actual_symbol = parsed.dig("symbol")&.upcase
+      expected_symbol = "#{from}/#{to}".upcase
+
+      return if actual_symbol.blank? || actual_symbol == expected_symbol
+
+      raise_invalid_exchange_rate_payload!(
+        "Expected #{expected_symbol} but provider returned #{actual_symbol} #{context}",
+        response_body: response_body
+      )
+    end
+
+    def validate_exchange_cross_metadata!(parsed:, from:, to:, start_date:, end_date:, response_body:)
+      base_instrument = parsed.dig("meta", "base_instrument").to_s.upcase
+      quote_instrument = parsed.dig("meta", "quote_instrument").to_s.upcase
+
+      return if base_instrument.blank? || quote_instrument.blank?
+
+      actual_from = base_instrument.split("/").first
+      actual_to = quote_instrument.split("/").first
+
+      return if actual_from == from.upcase && actual_to == to.upcase
+
+      raise_invalid_exchange_rate_payload!(
+        "Expected #{from}/#{to} but provider returned cross metadata #{base_instrument} -> #{quote_instrument} between #{start_date} and #{end_date}",
+        response_body: response_body
+      )
+    end
+
+    def raise_invalid_exchange_rate_payload!(message, response_body:)
+      Rails.logger.warn("#{self.class.name} #{message}, response: #{response_body}")
+      raise InvalidExchangeRateError.new("#{message}, response: #{response_body}")
+    end
 
     def base_url
       ENV["TWELVE_DATA_URL"] || "https://api.twelvedata.com"
