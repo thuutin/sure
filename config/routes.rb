@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => "/api-docs"
+
+  # Serve OpenAPI spec files
+  get "/api-docs/v1/swagger.yaml", to: redirect("/swagger/v1/swagger.yaml")
+
   use_doorkeeper
   # MFA routes
   resource :mfa, controller: "mfa", only: [ :new, :create ] do

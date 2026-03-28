@@ -49,6 +49,7 @@ gem "countries"
 
 # OAuth & API Security
 gem "doorkeeper"
+gem "rswag-ui"
 gem "rack-attack", "~> 6.6"
 gem "faraday"
 gem "faraday-retry"
@@ -83,6 +84,7 @@ group :development, :test do
   gem "i18n-tasks"
   gem "erb_lint"
   gem "dotenv-rails"
+  gem "rswag-specs"
 end
 
 if ENV["BENCHMARKING_ENABLED"]
