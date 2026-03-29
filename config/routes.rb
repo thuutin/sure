@@ -1,8 +1,6 @@
 Rails.application.routes.draw do
-  # Swagger UI - only available in development
-  if Rails.env.development?
-    mount Rswag::Ui::Engine => "/api-docs"
-  end
+  # Swagger UI for API documentation
+  mount Rswag::Ui::Engine => "/api-docs"
 
   use_doorkeeper
   # MFA routes
