@@ -49,6 +49,7 @@ gem "countries"
 
 # OAuth & API Security
 gem "doorkeeper"
+gem "rswag-api"
 gem "rswag-ui"
 gem "rack-attack", "~> 6.6"
 gem "faraday"

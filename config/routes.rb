@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  mount Rswag::Api::Engine => '/api-docs'
   # Swagger UI for API documentation
   mount Rswag::Ui::Engine => "/api-docs"
 
