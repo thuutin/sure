@@ -1,7 +1,8 @@
 Rails.application.routes.draw do
-  mount Rswag::Api::Engine => '/api-docs'
-  # Swagger UI for API documentation
-  mount Rswag::Ui::Engine => "/api-docs"
+  # Serve OpenAPI spec files at /api-docs
+  mount Rswag::Api::Engine => "/api-docs"
+  # Swagger UI at /api-docs-ui
+  mount Rswag::Ui::Engine => "/api-docs-ui"
 
   use_doorkeeper
   # MFA routes
