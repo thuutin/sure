@@ -2,9 +2,6 @@ Rails.application.routes.draw do
   # Swagger UI - only available in development
   if Rails.env.development?
     mount Rswag::Ui::Engine => "/api-docs"
-
-    # Serve OpenAPI spec files
-    get "/api-docs/v1/swagger.yaml", to: redirect("/swagger/v1/swagger.yaml")
   end
 
   use_doorkeeper
