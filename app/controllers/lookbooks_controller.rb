@@ -1,5 +1,3 @@
-if defined?(Lookbook::PreviewController)
-  class LookbooksController < Lookbook::PreviewController
-    layout "lookbooks"
-  end
+class LookbooksController < (defined?(Lookbook::PreviewController) ? Lookbook::PreviewController : ApplicationController)
+  layout "lookbooks"
 end
