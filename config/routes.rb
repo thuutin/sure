@@ -9,7 +9,7 @@ Rails.application.routes.draw do
     delete :disable
   end
 
-  mount Lookbook::Engine, at: "/design-system"
+  mount Lookbook::Engine, at: "/design-system" if Rails.env.development?
 
   mount MissionControl::Jobs::Engine, at: "/jobs"
   mount Litestream::Engine, at: "/litestream" if Rails.env.production?
