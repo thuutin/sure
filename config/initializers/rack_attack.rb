@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class Rack::Attack
+  SCANNER_PATH_PATTERNS = [
+    %r{(?:^|/)[^/]+\.php\d*\z}i,
+    %r{\A/+(?:wp-|wordpress|xmlrpc\.php|wp-admin|wp-content|wp-includes|plugin-(?:install|editor)\.php)}i
+  ].freeze
+
   # Enable Rack::Attack
   enabled = Rails.env.production? || Rails.env.staging?
 
@@ -43,7 +48,11 @@ class Rack::Attack
     ]
 
     user_agent = request.user_agent
-    suspicious_user_agents.any? { |pattern| user_agent =~ pattern } if user_agent
+    suspicious_user_agent = user_agent && suspicious_user_agents.any? { |pattern| user_agent =~ pattern }
+    normalized_path = request.path.sub(/\A\/+/, "/")
+    suspicious_path = SCANNER_PATH_PATTERNS.any? { |pattern| normalized_path.match?(pattern) }
+
+    suspicious_user_agent || suspicious_path
   end
 
   # Configure response for throttled requests
