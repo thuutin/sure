@@ -6,7 +6,14 @@ const parseLocalDate = d3.timeParse("%Y-%m-%d");
 export default class extends Controller {
   static values = {
     data: Object,
+    secondaryData: Object,
     strokeWidth: { type: Number, default: 2 },
+    secondaryStrokeColor: {
+      type: String,
+      default: "var(--color-gray-400)",
+    },
+    primarySeriesLabel: String,
+    secondarySeriesLabel: String,
     useLabels: { type: Boolean, default: true },
     useTooltip: { type: Boolean, default: true },
   };
@@ -17,6 +24,7 @@ export default class extends Controller {
   _d3InitialContainerWidth = 0;
   _d3InitialContainerHeight = 0;
   _normalDataPoints = [];
+  _secondaryDataPoints = [];
   _resizeObserver = null;
 
   connect() {
@@ -41,6 +49,7 @@ export default class extends Controller {
     this._d3GroupMemo = null;
     this._d3Tooltip = null;
     this._normalDataPoints = [];
+    this._secondaryDataPoints = [];
 
     this._d3Container.selectAll("*").remove();
   }
@@ -52,7 +61,14 @@ export default class extends Controller {
   }
 
   _normalizeDataPoints() {
-    this._normalDataPoints = (this.dataValue.values || []).map((d) => ({
+    this._normalDataPoints = this._normalizeSeriesPoints(this.dataValue);
+    this._secondaryDataPoints = this.hasSecondaryDataValue
+      ? this._normalizeSeriesPoints(this.secondaryDataValue)
+      : [];
+  }
+
+  _normalizeSeriesPoints(seriesData) {
+    return (seriesData?.values || []).map((d) => ({
       date: parseLocalDate(d.date),
       date_formatted: d.date_formatted,
       value: d.value,
@@ -103,6 +119,10 @@ export default class extends Controller {
   }
 
   _drawChart() {
+    if (this._secondaryDataPoints.length >= 2) {
+      this._drawSecondaryTrendline();
+    }
+
     this._drawTrendline();
 
     if (this.useLabelsValue) {
@@ -128,6 +148,19 @@ export default class extends Controller {
       .attr("stroke-linejoin", "round")
       .attr("stroke-linecap", "round")
       .attr("stroke-width", this.strokeWidthValue);
+  }
+
+  _drawSecondaryTrendline() {
+    this._d3Group
+      .append("path")
+      .datum(this._secondaryDataPoints)
+      .attr("fill", "none")
+      .attr("stroke", this.secondaryStrokeColorValue)
+      .attr("stroke-dasharray", "6 4")
+      .attr("d", this._d3SecondaryLine)
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+      .attr("stroke-width", Math.max(1.5, this.strokeWidthValue - 0.25));
   }
 
   _installTrendlineSplit() {
@@ -373,27 +406,66 @@ export default class extends Controller {
   }
 
   _tooltipTemplate(datum) {
+    const secondaryDatum = this._findSecondaryDatum(datum.date);
+
+    if (!secondaryDatum) {
+      return `
+        <div style="margin-bottom: 4px; color: var(--color-gray-500);">
+          ${datum.date_formatted}
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 text-primary">
+            <div class="flex items-center justify-center h-4 w-4">
+              ${this._getTrendIcon(datum)}
+            </div>
+            ${this._extractFormattedValue(datum.trend.current)}
+          </div>
+
+          ${
+            datum.trend.value === 0
+              ? `<span class="w-20"></span>`
+              : `
+            <span style="color: ${datum.trend.color};">
+              ${this._extractFormattedValue(datum.trend.value)} (${datum.trend.percent_formatted})
+            </span>
+          `
+          }
+        </div>
+      `;
+    }
+
     return `
       <div style="margin-bottom: 4px; color: var(--color-gray-500);">
         ${datum.date_formatted}
       </div>
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2 text-primary">
-          <div class="flex items-center justify-center h-4 w-4">
-            ${this._getTrendIcon(datum)}
+      <div class="space-y-2">
+        <div class="flex items-center justify-between gap-6">
+          <div class="flex items-center gap-2 text-primary">
+            <div class="flex items-center justify-center h-4 w-4">
+              ${this._getTrendIcon(datum)}
+            </div>
+            <span>${this._primarySeriesLabel}</span>
           </div>
-          ${this._extractFormattedValue(datum.trend.current)}
+          <span class="text-primary">
+            ${this._extractFormattedValue(datum.trend.current)}
+          </span>
         </div>
-
         ${
           datum.trend.value === 0
-            ? `<span class="w-20"></span>`
+            ? ""
             : `
-          <span style="color: ${datum.trend.color};">
+          <div style="color: ${datum.trend.color};">
             ${this._extractFormattedValue(datum.trend.value)} (${datum.trend.percent_formatted})
-          </span>
+          </div>
         `
         }
+        <div class="flex items-center justify-between gap-6 text-secondary">
+          <div class="flex items-center gap-2">
+            <div style="width: 16px; border-top: 2px dashed ${this.secondaryStrokeColorValue};"></div>
+            <span>${this._secondarySeriesLabel}</span>
+          </div>
+          <span>${this._extractFormattedValue(secondaryDatum.value)}</span>
+        </div>
       </div>
     `;
   }
@@ -418,6 +490,12 @@ export default class extends Controller {
   _getDatumValue = (datum) => {
     return this._extractNumericValue(datum.value);
   };
+
+  _findSecondaryDatum(date) {
+    return this._secondaryDataPoints.find(
+      (datum) => datum.date?.getTime() === date?.getTime(),
+    );
+  }
 
   _extractNumericValue = (numeric) => {
     if (typeof numeric === "object" && "amount" in numeric) {
@@ -493,6 +571,18 @@ export default class extends Controller {
     return this.dataValue.trend.color;
   }
 
+  get _primarySeriesLabel() {
+    return this.hasPrimarySeriesLabelValue
+      ? this.primarySeriesLabelValue
+      : "Primary";
+  }
+
+  get _secondarySeriesLabel() {
+    return this.hasSecondarySeriesLabelValue
+      ? this.secondarySeriesLabelValue
+      : "Secondary";
+  }
+
   get _d3Line() {
     return d3
       .line()
@@ -500,16 +590,27 @@ export default class extends Controller {
       .y((d) => this._d3YScale(this._getDatumValue(d)));
   }
 
+  get _d3SecondaryLine() {
+    return d3
+      .line()
+      .x((d) => this._d3XScale(d.date))
+      .y((d) => this._d3YScale(this._getDatumValue(d)));
+  }
+
+  get _allDataPoints() {
+    return [...this._normalDataPoints, ...this._secondaryDataPoints];
+  }
+
   get _d3XScale() {
     return d3
       .scaleTime()
       .rangeRound([0, this._d3ContainerWidth])
-      .domain(d3.extent(this._normalDataPoints, (d) => d.date));
+      .domain(d3.extent(this._allDataPoints, (d) => d.date));
   }
 
   get _d3YScale() {
-    const dataMin = d3.min(this._normalDataPoints, this._getDatumValue);
-    const dataMax = d3.max(this._normalDataPoints, this._getDatumValue);
+    const dataMin = d3.min(this._allDataPoints, this._getDatumValue);
+    const dataMax = d3.max(this._allDataPoints, this._getDatumValue);
 
     // Handle edge case where all values are the same
     if (dataMin === dataMax) {
