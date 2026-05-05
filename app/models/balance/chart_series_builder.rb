@@ -65,23 +65,43 @@ class Balance::ChartSeriesBuilder
       )
     end
 
-    def query_data
-      @query_data ||= Balance.find_by_sql([
-        query,
-        {
-          account_ids: account_ids,
-          target_currency: currency,
-          start_date: period.start_date,
-          end_date: period.end_date,
-          interval: interval,
-          sign_multiplier: sign_multiplier
-        }
-      ])
-    rescue => e
-      Rails.logger.error "Query data error: #{e.message} for accounts #{account_ids}, period #{period.start_date} to #{period.end_date}"
-      raise
+    def accounts
+      @accounts ||= Account.where(id: account_ids).select(:id, :currency, :name)
     end
 
+    def exchange_rates
+      @exchange_rates ||= begin
+        ExchangeRate.where(date: (period.start_date - 30.days)..period.end_date) # extend the range so exchange rates are likely to be available
+          .and(ExchangeRate.where(to_currency: currency))
+          .and(ExchangeRate.where(from_currency: accounts.pluck(:currency).uniq))
+          .select(:id, :date, :rate, :from_currency, :to_currency)
+          .group_by { |er| [ er.from_currency, er.to_currency ] }
+          .transform_values { |rates| rates.sort_by(&:date).reverse }
+      end
+    end
+
+    def balances
+      @balances ||= Balance.where(account_id: account_ids)
+      .where(date: period.date_range)
+      .select("*")
+      .group_by { |b| [ b.account_id, b.date ] }
+      .transform_values { |balances| balances.sort_by(&:date).last }
+    end
+
+    def starting_balances
+      @starting_balances ||= begin
+        latest_dates = Balance.where("date <= ?", period.start_date)
+              .where(account_id: account_ids)
+              .group(:account_id)
+              .maximum(:date)
+
+        Balance.where(account_id: latest_dates.keys)
+          .where(date: latest_dates.values)
+          .select(:account_id, :date, :end_balance, :end_cash_balance, :end_non_cash_balance, :start_balance, :start_cash_balance, :start_non_cash_balance, :flows_factor, :cash_inflows, :cash_outflows, :non_cash_inflows, :non_cash_outflows, :net_market_flows, :cash_adjustments, :non_cash_adjustments)
+          .group_by { |b| b.account_id }
+          .transform_values { |balances| balances.sort_by(&:date).last }
+      end
+    end
     # Since the query aggregates the *net* of assets - liabilities, this means that if we're looking at
     # a single liability account, we'll get a negative set of values.  This is not what the user expects
     # to see.  When favorable direction is "down" (i.e. liability, decrease is "good"), we need to invert
@@ -90,72 +110,75 @@ class Balance::ChartSeriesBuilder
       favorable_direction == "down" ? -1 : 1
     end
 
-    def query
-      <<~SQL
-        WITH dates AS (
-          SELECT generate_series(DATE :start_date, DATE :end_date, :interval::interval)::date AS date
-          UNION DISTINCT
-          SELECT :end_date::date  -- Ensure end date is included
-        )
-        SELECT
-          d.date,
-          -- Use flows_factor: already handles asset (+1) vs liability (-1)
-          COALESCE(SUM(last_bal.end_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS end_balance,
-          COALESCE(SUM(last_bal.end_cash_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS end_cash_balance,
-          -- Holdings only for assets (flows_factor = 1)
-          COALESCE(SUM(
-            CASE WHEN last_bal.flows_factor = 1
-              THEN last_bal.end_non_cash_balance
-              ELSE 0
-            END * COALESCE(er.rate, 1) * :sign_multiplier::integer
-          ), 0) AS end_holdings_balance,
-          -- Previous balances
-          COALESCE(SUM(last_bal.start_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS start_balance,
-          COALESCE(SUM(last_bal.start_cash_balance * last_bal.flows_factor * COALESCE(er.rate, 1) * :sign_multiplier::integer), 0) AS start_cash_balance,
-          COALESCE(SUM(
-            CASE WHEN last_bal.flows_factor = 1
-              THEN last_bal.start_non_cash_balance
-              ELSE 0
-            END * COALESCE(er.rate, 1) * :sign_multiplier::integer
-          ), 0) AS start_holdings_balance
-        FROM dates d
-        CROSS JOIN accounts
-        LEFT JOIN LATERAL (
-          SELECT b.end_balance,
-                 b.end_cash_balance,
-                 b.end_non_cash_balance,
-                 b.start_balance,
-                 b.start_cash_balance,
-                 b.start_non_cash_balance,
-                 b.flows_factor
-          FROM balances b
-          WHERE b.account_id = accounts.id
-            AND b.currency = accounts.currency
-            AND b.date <= d.date
-          ORDER BY b.date DESC
-          LIMIT 1
-        ) last_bal ON TRUE
-        LEFT JOIN LATERAL (
-          SELECT COALESCE(
-            (SELECT er.rate
-             FROM exchange_rates er
-             WHERE er.from_currency = accounts.currency
-               AND er.to_currency = :target_currency
-               AND er.date <= d.date
-             ORDER BY er.date DESC
-             LIMIT 1),
-            (SELECT er.rate
-             FROM exchange_rates er
-             WHERE er.from_currency = accounts.currency
-               AND er.to_currency = :target_currency
-               AND er.date > d.date
-             ORDER BY er.date ASC
-             LIMIT 1)
-          ) AS rate
-        ) er ON TRUE
-        WHERE accounts.id = ANY(array[:account_ids]::uuid[])
-        GROUP BY d.date
-        ORDER BY d.date
-      SQL
+    def rate_for(from, to, date)
+      if from == to
+        return 1
+      end
+      rates = exchange_rates.dig([ from, to ]) || []
+      closest_rate = rates.bsearch { |rate| rate.date <= date }
+      closest_rate&.rate || 1
+    end
+
+    def query_data
+      @query_data ||= begin
+        result = date_series.map do |date|
+          OpenStruct.new(
+            date: date,
+            end_balance: 0,
+            end_cash_balance: 0,
+            end_holdings_balance: 0,
+            start_balance: 0,
+            start_cash_balance: 0,
+            start_holdings_balance: 0
+          )
+        end
+        accounts.each do |account|
+          previous = starting_balances.dig(account.id)
+          date_series.map.with_index.each do |date, index|
+            balance = balances.dig([ account.id, date ]) || previous
+            previous = balance
+            rate = rate_for(account.currency, currency, date)
+            if balance
+              factor = balance.flows_factor * sign_multiplier * rate
+              result[index].end_balance += balance.end_balance * factor
+              result[index].end_cash_balance += balance.end_cash_balance * factor
+              result[index].start_balance += balance.start_balance * factor
+              result[index].start_cash_balance += balance.start_cash_balance * factor
+              if balance.flows_factor == 1
+                result[index].end_holdings_balance += balance.end_non_cash_balance * factor
+                result[index].start_holdings_balance += balance.start_non_cash_balance * factor
+              end
+            end
+          end
+        end
+        result
+      end
+    rescue => e
+      Rails.logger.error "Query data error: #{e.message} for accounts #{account_ids}, period #{period.start_date} to #{period.end_date}"
+      raise
+    end
+
+    def date_series
+      @date_series ||= begin
+        dates = []
+        current_date = period.start_date
+
+        while current_date <= period.end_date
+          dates << current_date
+          current_date = case interval
+          when "1 day"
+            current_date + 1.day
+          when "1 week"
+            current_date + 1.week
+          else
+            # Default to daily if interval is not recognized
+            current_date + 1.day
+          end
+        end
+
+        # Ensure end date is included
+        dates << period.end_date unless dates.include?(period.end_date)
+        dates.sort
+      end
     end
 end

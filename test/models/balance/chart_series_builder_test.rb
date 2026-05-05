@@ -4,6 +4,9 @@ class Balance::ChartSeriesBuilderTest < ActiveSupport::TestCase
   include BalanceTestHelper
 
   setup do
+    Account.all.each do |account|
+      account.save! # trigger callback to set classification
+    end
   end
 
   test "balance series with fallbacks and gapfills" do
