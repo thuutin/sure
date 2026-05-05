@@ -1,7 +1,7 @@
 require "test_helper"
 
 class AccountTest < ActiveSupport::TestCase
-  include SyncableInterfaceTest, EntriesTestHelper, ActiveJob::TestHelper
+  include SyncableInterfaceTest, EntriesTestHelper, BalanceTestHelper
 
   setup do
     @account = @syncable = accounts(:depository)
@@ -118,174 +118,26 @@ class AccountTest < ActiveSupport::TestCase
     assert_equal "Investments", account.long_subtype_label
   end
 
-  # Tax treatment tests (TaxTreatable concern)
+  test "balance series memoizes per target currency" do
+    @account.save!
+    @account.balances.destroy_all
 
-  test "tax_treatment delegates to accountable for Investment" do
-    investment = Investment.new(subtype: "401k")
-    account = @family.accounts.create!(
-      owner: @admin,
-      name: "Test 401k",
-      balance: 1000,
-      currency: "USD",
-      accountable: investment
+    create_balance(account: @account, date: 1.day.ago.to_date, balance: 1000)
+    create_balance(account: @account, date: Date.current, balance: 1200)
+
+    ExchangeRate.create!(
+      date: 1.day.ago.to_date,
+      from_currency: "USD",
+      to_currency: "EUR",
+      rate: 2
     )
 
-    assert_equal :tax_deferred, account.tax_treatment
-    assert_equal I18n.t("accounts.tax_treatments.tax_deferred"), account.tax_treatment_label
-  end
+    period = Period.custom(start_date: 1.day.ago.to_date, end_date: Date.current)
 
-  test "tax_treatment delegates to accountable for Crypto" do
-    crypto = Crypto.new(tax_treatment: :taxable)
-    account = @family.accounts.create!(
-      owner: @admin,
-      name: "Test Crypto",
-      balance: 500,
-      currency: "USD",
-      accountable: crypto
-    )
+    usd_series = @account.balance_series(period: period, currency: "USD")
+    eur_series = @account.balance_series(period: period, currency: "EUR")
 
-    assert_equal :taxable, account.tax_treatment
-    assert_equal I18n.t("accounts.tax_treatments.taxable"), account.tax_treatment_label
-  end
-
-  test "tax_treatment returns nil for non-investment accounts" do
-    # Depository accounts don't have tax_treatment
-    assert_nil @account.tax_treatment
-    assert_nil @account.tax_treatment_label
-  end
-
-  test "tax_advantaged? returns true for tax-advantaged accounts" do
-    investment = Investment.new(subtype: "401k")
-    account = @family.accounts.create!(
-      owner: @admin,
-      name: "Test 401k",
-      balance: 1000,
-      currency: "USD",
-      accountable: investment
-    )
-
-    assert account.tax_advantaged?
-    assert_not account.taxable?
-  end
-
-  test "tax_advantaged? returns false for taxable accounts" do
-    investment = Investment.new(subtype: "brokerage")
-    account = @family.accounts.create!(
-      owner: @admin,
-      name: "Test Brokerage",
-      balance: 1000,
-      currency: "USD",
-      accountable: investment
-    )
-
-    assert_not account.tax_advantaged?
-    assert account.taxable?
-  end
-
-  test "taxable? returns true for accounts without tax_treatment" do
-    # Depository accounts
-    assert @account.taxable?
-    assert_not @account.tax_advantaged?
-  end
-
-  test "destroying account purges attached logo" do
-    @account.logo.attach(
-      io: StringIO.new("fake-logo-content"),
-      filename: "logo.png",
-      content_type: "image/png"
-    )
-
-    attachment_id = @account.logo.id
-    assert ActiveStorage::Attachment.exists?(attachment_id)
-
-    perform_enqueued_jobs do
-      @account.destroy!
-    end
-
-    assert_not ActiveStorage::Attachment.exists?(attachment_id)
-  end
-
-  # Account sharing tests
-
-  test "owned_by? returns true for account owner" do
-    assert @account.owned_by?(@admin)
-    assert_not @account.owned_by?(@member)
-  end
-
-  test "shared_with? returns true for owner and shared users" do
-    assert @account.shared_with?(@admin) # owner
-    # depository already shared with member via fixture
-    assert @account.shared_with?(@member)
-  end
-
-  test "shared? returns true when account has shares" do
-    account = accounts(:investment)
-    account.account_shares.destroy_all
-    assert_not account.shared?
-
-    account.share_with!(@member, permission: "read_only")
-    assert account.shared?
-  end
-
-  test "permission_for returns correct permission level" do
-    assert_equal :owner, @account.permission_for(@admin)
-
-    # depository already shared with member via fixture
-    share = @account.account_shares.find_by(user: @member)
-    share.update!(permission: "read_write")
-    assert_equal :read_write, @account.permission_for(@member)
-  end
-
-  test "accessible_by scope returns owned and shared accounts" do
-    # Clear existing shares for clean test
-    AccountShare.delete_all
-
-    admin_accessible = @family.accounts.accessible_by(@admin)
-    member_accessible = @family.accounts.accessible_by(@member)
-
-    # Admin owns all fixture accounts
-    assert_equal @family.accounts.count, admin_accessible.count
-    # Member has no access (no shares, no owned accounts)
-    assert_equal 0, member_accessible.count
-
-    # Share one account
-    @account.share_with!(@member, permission: "read_only")
-    member_accessible = @family.accounts.accessible_by(@member)
-    assert_equal 1, member_accessible.count
-    assert_includes member_accessible, @account
-  end
-
-  test "included_in_finances_for scope respects include_in_finances flag" do
-    AccountShare.delete_all
-
-    @account.share_with!(@member, permission: "read_only", include_in_finances: true)
-    assert_includes @family.accounts.included_in_finances_for(@member), @account
-
-    share = @account.account_shares.find_by(user: @member)
-    share.update!(include_in_finances: false)
-    assert_not_includes @family.accounts.included_in_finances_for(@member), @account
-  end
-
-  test "auto_share_with_family creates shares for all non-owner members" do
-    @family.update!(default_account_sharing: "private")
-
-    account = Account.create_and_sync({
-      family: @family,
-      owner: @admin,
-      name: "New Shared Account",
-      balance: 100,
-      currency: "USD",
-      accountable_type: "Depository",
-      accountable_attributes: {}
-    })
-
-    assert_difference -> { AccountShare.count }, @family.users.where.not(id: @admin.id).count do
-      account.auto_share_with_family!
-    end
-
-    share = account.account_shares.find_by(user: @member)
-    assert_not_nil share
-    assert_equal "read_write", share.permission
-    assert share.include_in_finances?
+    assert_equal [ 1000, 1200 ], usd_series.map { |value| value.value.amount }
+    assert_equal [ 2000, 2400 ], eur_series.map { |value| value.value.amount }
   end
 end

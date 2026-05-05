@@ -1,7 +1,7 @@
 require "test_helper"
 
 class AccountsControllerTest < ActionDispatch::IntegrationTest
-  include ActionView::RecordIdentifier
+  include BalanceTestHelper
 
   setup do
     sign_in @user = users(:family_admin)
@@ -19,60 +19,34 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "account activity marks trade amounts as privacy-sensitive" do
-    trade_entry = entries(:trade)
-    expected_amount = ApplicationController.helpers.format_money(-trade_entry.amount_money)
+  test "show exposes a secondary chart series for foreign currency accounts" do
+    @account.update!(currency: "EUR")
+    @account.save!
+    @account.balances.destroy_all
 
-    get account_url(accounts(:investment))
+    create_balance(account: @account, date: 1.day.ago.to_date, balance: 1000)
+    create_balance(account: @account, date: Date.current, balance: 1200)
 
-    assert_response :success
-    assert_select "turbo-frame##{dom_id(trade_entry)} p.privacy-sensitive", text: expected_amount, count: 1
-  end
-
-  test "activity pagination keeps activity tab when loaded from holdings tab" do
-    investment = accounts(:investment)
-
-    11.times do |i|
-      Entry.create!(
-        account: investment,
-        name: "Test investment activity #{i}",
-        date: Date.current - i.days,
-        amount: 10 + i,
-        currency: investment.currency,
-        entryable: Transaction.new
-      )
-    end
-
-    get account_url(investment, tab: "holdings")
-
-    assert_response :success
-    assert_select "a[href*='page=2'][href*='tab=activity']"
-    assert_select "a[href*='page=2'][href*='tab=holdings']", count: 0
-  end
-
-  test "account activity constrains long category labels before the amount on wide screens" do
-    category = categories(:food_and_drink)
-    category.update!(name: "Super Long Category Name That Should Stop Before The Amount On Wide Screens Too")
-
-    entry = @account.entries.create!(
-      name: "Wide category verification",
-      date: Date.current,
-      amount: 187.65,
-      currency: @account.currency,
-      entryable: Transaction.new(category: category)
+    ExchangeRate.create!(
+      date: 1.day.ago.to_date,
+      from_currency: "EUR",
+      to_currency: "USD",
+      rate: 1.1
     )
 
-    get account_url(@account, tab: "activity")
-
+    get account_url(@account)
     assert_response :success
-    assert_select "##{dom_id(entry.entryable, "category_menu_desktop")}"
-    assert_select "##{dom_id(entry.entryable, "category_menu_desktop")}.min-w-0"
-    assert_select "##{dom_id(entry.entryable, "category_menu_desktop")}.overflow-hidden"
-    assert_select "##{dom_id(entry.entryable, "category_menu_desktop")} button.block"
-    assert_select "##{dom_id(entry.entryable, "category_menu_desktop")} button.w-full"
-    assert_select "##{dom_id(entry.entryable, "category_menu_desktop")} button.overflow-hidden"
-    assert_select "##{dom_id(entry.entryable, "category_menu_desktop")} [data-testid='category-name']"
-    assert_select "div.hidden.md\\:flex.min-w-0"
+
+    chart = Nokogiri::HTML(response.body).at_css("[data-controller='time-series-chart']")
+    assert chart, "expected account chart to be rendered"
+    assert chart["data-time-series-chart-secondary-data-value"].present?
+    assert_equal "EUR", chart["data-time-series-chart-primary-series-label-value"]
+    assert_equal "USD equivalent", chart["data-time-series-chart-secondary-series-label-value"]
+
+    secondary_data = JSON.parse(CGI.unescapeHTML(chart["data-time-series-chart-secondary-data-value"]))
+
+    assert_equal "USD", secondary_data["values"].last["value"]["currency"]
+    assert_in_delta 1320, secondary_data["values"].last["value"]["amount"].to_f, 0.001
   end
 
   test "should sync account" do

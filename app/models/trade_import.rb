@@ -15,8 +15,7 @@ class TradeImport < Import
           ticker: row.ticker,
           exchange_operating_mic: row.exchange_operating_mic
         )
-
-        Trade.new(
+        trade = Trade.new(
           security: security,
           qty: row.qty,
           currency: row.currency.presence || mapped_account.currency,
@@ -29,12 +28,10 @@ class TradeImport < Import
             name: row.name,
             currency: row.currency.presence || mapped_account.currency,
             import: self,
-            import_locked: true  # Protect from provider sync overwrites
           ),
         )
+        trade.save!
       end
-
-      Trade.import!(trades, recursive: true)
     end
   end
 

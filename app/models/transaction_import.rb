@@ -3,11 +3,7 @@ class TransactionImport < Import
     transaction do
       mappings.each(&:create_mappable!)
 
-      new_transactions = []
-      updated_entries = []
-      claimed_entry_ids = Set.new # Track entries we've already claimed in this import
-
-      rows.each_with_index do |row, index|
+      rows.map do |row|
         mapped_account = if account
           account
         else
@@ -26,59 +22,20 @@ class TransactionImport < Import
 
         category = mappings.categories.mappable_for(row.category)
         tags = row.tags_list.map { |tag| mappings.tags.mappable_for(tag) }.compact
-
-        # Use account's currency when no currency column was mapped in CSV, with family currency as fallback
-        effective_currency = currency_col_label.present? ? row.currency : (mapped_account.currency.presence || family.currency)
-
-        # Check for duplicate transactions using the adapter's deduplication logic
-        # Pass claimed_entry_ids to exclude entries we've already matched in this import
-        # This ensures identical rows within the CSV are all imported as separate transactions
-        adapter = Account::ProviderImportAdapter.new(mapped_account)
-        duplicate_entry = adapter.find_duplicate_transaction(
-          date: row.date_iso,
-          amount: row.signed_amount,
-          currency: effective_currency,
-          name: row.name,
-          exclude_entry_ids: claimed_entry_ids
-        )
-
-        if duplicate_entry
-          # Update existing transaction instead of creating a new one
-          duplicate_entry.transaction.category = category if category.present?
-          duplicate_entry.transaction.tags = tags if tags.any?
-          duplicate_entry.notes = row.notes if row.notes.present?
-          duplicate_entry.import = self
-          duplicate_entry.import_locked = true  # Protect from provider sync overwrites
-          updated_entries << duplicate_entry
-          claimed_entry_ids.add(duplicate_entry.id)
-        else
-          # Create new transaction (no duplicate found)
-          # Mark as import_locked to protect from provider sync overwrites
-          new_transactions << Transaction.new(
-            category: category,
-            tags: tags,
-            entry: Entry.new(
-              account: mapped_account,
-              date: row.date_iso,
-              amount: row.signed_amount,
-              name: row.name,
-              currency: effective_currency,
-              notes: row.notes,
-              import: self,
-              import_locked: true
-            )
-          )
-        end
+        Transaction.new(
+          category: category,
+          tags: tags,
+          entry: Entry.new(
+            account: mapped_account,
+            date: row.date_iso,
+            amount: row.signed_amount,
+            name: row.name,
+            currency: row.currency,
+            notes: row.notes,
+            import: self,
+          ),
+        ).save!
       end
-
-      # Save updated entries first
-      updated_entries.each do |entry|
-        entry.transaction.save!
-        entry.save!
-      end
-
-      # Bulk import new transactions
-      Transaction.import!(new_transactions, recursive: true) if new_transactions.any?
     end
   end
 

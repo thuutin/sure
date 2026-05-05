@@ -32,6 +32,6 @@ class Account::Syncer
       Account::MarketDataImporter.new(account).import_all
     rescue => e
       Rails.logger.error("Error syncing market data for account #{account.id}: #{e.message}")
-      Sentry.capture_exception(e)
+      Rails.error.report(e)
     end
 end

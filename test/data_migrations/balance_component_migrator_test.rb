@@ -10,6 +10,9 @@ class BalanceComponentMigratorTest < ActiveSupport::TestCase
 
     # Start fresh
     Balance.delete_all
+    Account.all.each do |account|
+      account.save! # trigger callback to set classification
+    end
   end
 
   test "depository account with no gaps" do

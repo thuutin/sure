@@ -7,8 +7,9 @@ class Transfer::CreatorTest < ActiveSupport::TestCase
     @destination_account = accounts(:investment)
     @date = Date.current
     @amount = 100
-    # Ensure the Investment Contributions category exists for transfer tests
-    @investment_category = ensure_investment_contributions_category(@family)
+    Account.all.each do |account|
+      account.save! # ensure classification is set
+    end
   end
 
   test "creates investment contribution when transferring from depository to investment" do

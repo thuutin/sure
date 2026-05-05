@@ -21,9 +21,10 @@ class Holding::PortfolioSnapshot
         .uniq
         .each_with_object({}) { |security_id, hash| hash[security_id] = 0 }
 
-      latest_holdings_scope.each do |holding|
-        portfolio[holding.security_id] = holding.qty
-      end
+      # Get the most recent holding for each security and update quantities
+      account.holdings
+        .group_by(&:security_id)
+        .each { |security_id, holdings| portfolio[security_id] = holdings.max_by(&:date).qty }
 
       portfolio
     end

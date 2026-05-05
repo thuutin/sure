@@ -86,11 +86,8 @@ class Rule::ConditionFilter
     def sanitize_operator(operator)
       raise UnsupportedOperatorError, "Unsupported operator: #{operator} for type: #{type}" unless operators.map(&:last).include?(operator)
 
-      case operator
-      when "like"
-        "ILIKE"
-      when "is_null"
-        "IS NULL"
+      if operator == "like"
+        "LIKE"  # Use LIKE with LOWER() for case-insensitive search
       else
         operator
       end

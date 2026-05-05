@@ -19,8 +19,10 @@ module Enrichable
 
     scope :enrichable, ->(attrs) {
       attrs = Array(attrs).map(&:to_s)
-      json_condition = attrs.each_with_object({}) { |attr, hash| hash[attr] = true }
-      where.not(Arel.sql("#{table_name}.locked_attributes ?| array[:keys]"), keys: attrs)
+      # SQLite uses -> '$.attr' for JSON extraction
+      where(
+        attrs.map { |attr| "#{table_name}.locked_attributes ->> '$.#{attr}' IS NULL" }.join(" AND ")
+      )
     }
   end
 
