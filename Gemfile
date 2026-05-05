@@ -3,11 +3,7 @@ source "https://rubygems.org"
 ruby file: ".ruby-version"
 
 # Rails
-gem "rails", "~> 7.2.2"
-
-# Drivers
-gem "pg", "~> 1.5"
-gem "redis", "~> 5.4"
+gem "rails", "~> 8.1.1"
 
 # Deployment
 gem "puma", ">= 5.0"
@@ -27,15 +23,12 @@ gem "view_component"
 gem "hotwire_combobox"
 
 # Background Jobs
-gem "sidekiq"
-gem "sidekiq-cron"
 
 # Monitoring
 gem "vernier"
 gem "rack-mini-profiler"
 gem "sentry-ruby"
 gem "sentry-rails"
-gem "sentry-sidekiq"
 gem "logtail-rails"
 gem "skylight", groups: [ :production ]
 
@@ -52,15 +45,16 @@ gem "countries"
 
 # OAuth & API Security
 gem "doorkeeper"
+gem "rswag-ui"
 gem "rack-attack", "~> 6.6"
 gem "faraday"
 gem "faraday-retry"
 gem "faraday-multipart"
 gem "inline_svg"
 gem "octokit"
-gem "pagy"
+gem "pagy", "~> 9.0"
 gem "rails-settings-cached"
-gem "tzinfo-data", platforms: %i[windows jruby]
+gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
 gem "csv"
 gem "redcarpet"
 gem "stripe"
@@ -80,12 +74,13 @@ gem "ruby-openai"
 gem "langfuse-ruby", "~> 0.1.4", require: "langfuse"
 
 group :development, :test do
-  gem "debug", platforms: %i[mri windows]
+  gem "debug", platforms: %i[mri mingw mswin x64_mingw]
   gem "brakeman", require: false
   gem "rubocop-rails-omakase", require: false
   gem "i18n-tasks"
   gem "erb_lint"
   gem "dotenv-rails"
+  gem "rswag-specs"
 end
 
 if ENV["BENCHMARKING_ENABLED"]
@@ -116,3 +111,23 @@ group :test do
   gem "climate_control"
   gem "simplecov", require: false
 end
+
+gem "rails_db", "~> 2.5"
+
+gem "seed_dump", github: "rroblak/seed_dump"
+
+gem "solid_cache", "~> 1.0"
+
+gem "sqlite3", "~> 2.7"
+
+gem "solid_queue", "~> 1.2"
+
+gem "solid_cable", "~> 3.0"
+
+gem "mission_control-jobs", "~> 1.1"
+
+gem "sqlean", "~> 0.3.0"
+
+gem "litestream", "~> 0.14.0"
+
+gem "honeybadger", "~> 6.1"

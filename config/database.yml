@@ -1,20 +1,50 @@
 default: &default
-  adapter: postgresql
-  encoding: unicode
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 3 } %>
-  host: <%= ENV.fetch("DB_HOST") { "127.0.0.1" } %>
-  port: <%= ENV.fetch("DB_PORT") { "5432" } %>
-  user: <%= ENV.fetch("POSTGRES_USER") { nil } %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD") { nil } %>
+  adapter: sqlite3
+  timeout: 5000
+  default_transaction_mode: IMMEDIATE
+  pragmas:
+    foreign_keys: "ON"
 
 development:
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_DB") { "maybe_development" } %>
+  primary:
+    <<: *default
+    database: storage/development_primary.sqlite3
+    extensions:
+      - <%= SQLean::UUID.to_path %>
+  cache:
+    <<: *default
+    database: storage/development_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/development_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/development_cable.sqlite3
+    migrations_paths: db/cable_migrate
 
 test:
   <<: *default
-  database: <%= ENV.fetch("POSTGRES_DB") { "maybe_test" } %>
+  database: storage/test_primary.sqlite3
+  extensions:
+    - <%= SQLean::UUID.to_path %>
 
 production:
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_DB") { "maybe_production" } %>
+  primary:
+    <<: *default
+    database: storage/production_primary.sqlite3
+    extensions:
+      - <%= SQLean::UUID.to_path %>
+  cache:
+    <<: *default
+    database: storage/production_cache.sqlite3
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: storage/production_queue.sqlite3
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: storage/production_cable.sqlite3
+    migrations_paths: db/cable_migrate

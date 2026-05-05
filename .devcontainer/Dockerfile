@@ -15,7 +15,6 @@ RUN apt-get update -qq \
     libyaml-dev \
     libyaml-0-2 \
     openssh-client \
-    postgresql-client \
     vim \
   && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
