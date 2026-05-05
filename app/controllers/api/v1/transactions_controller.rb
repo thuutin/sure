@@ -104,7 +104,7 @@ class Api::V1::TransactionsController < Api::V1::BaseController
       error: "internal_server_error",
       message: "An unexpected error occurred"
     }, status: :internal_server_error
-end
+  end
 
   def update
     if @entry.split_child?
@@ -270,15 +270,15 @@ end
     end
 
     def apply_search(query)
-      search_term = "%#{params[:search]}%"
+      search_term = "%#{params[:search].downcase}%"
 
       query.joins(:entry)
            .left_joins(:merchant)
            .where(
-             "entries.name ILIKE ? OR entries.notes ILIKE ? OR merchants.name ILIKE ?",
+             "LOWER(entries.name) LIKE ? OR LOWER(entries.notes) LIKE ? OR LOWER(merchants.name) LIKE ?",
              search_term, search_term, search_term
            )
-end
+    end
 
     def transaction_params
       params.require(:transaction).permit(
