@@ -9,6 +9,8 @@ class Transaction < ApplicationRecord
 
   accepts_nested_attributes_for :taggings, allow_destroy: true
 
+  before_save :normalize_foreign_keys
+
   enum :kind, {
     standard: "standard", # A regular transaction, included in budget analytics
     funds_movement: "funds_movement", # Movement of funds between accounts, excluded from budget analytics
@@ -30,5 +32,12 @@ class Transaction < ApplicationRecord
     end
 
     update!(category: category)
+  end
+
+  def normalize_foreign_keys
+    %w[category_id merchant_id].each do |field|
+      value = send(field)
+      send("#{field}=", nil) if value.blank?
+    end
   end
 end

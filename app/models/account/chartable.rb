@@ -5,16 +5,16 @@ module Account::Chartable
     classification == "asset" ? "up" : "down"
   end
 
-  def balance_series(period: Period.last_30_days, view: :balance, interval: nil)
+  def balance_series(period: Period.last_30_days, view: :balance, interval: nil, currency: self.currency)
     raise ArgumentError, "Invalid view type" unless [ :balance, :cash_balance, :holdings_balance ].include?(view.to_sym)
 
     @balance_series ||= {}
 
-    memo_key = [ period.start_date, period.end_date, interval ].compact.join("_")
+    memo_key = [ period.start_date, period.end_date, interval, currency ].compact.join("_")
 
     builder = (@balance_series[memo_key] ||= Balance::ChartSeriesBuilder.new(
       account_ids: [ id ],
-      currency: self.currency,
+      currency: currency,
       period: period,
       favorable_direction: favorable_direction,
       interval: interval

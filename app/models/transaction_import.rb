@@ -3,7 +3,7 @@ class TransactionImport < Import
     transaction do
       mappings.each(&:create_mappable!)
 
-      transactions = rows.map do |row|
+      rows.map do |row|
         mapped_account = if account
           account
         else
@@ -12,7 +12,6 @@ class TransactionImport < Import
 
         category = mappings.categories.mappable_for(row.category)
         tags = row.tags_list.map { |tag| mappings.tags.mappable_for(tag) }.compact
-
         Transaction.new(
           category: category,
           tags: tags,
@@ -23,12 +22,10 @@ class TransactionImport < Import
             name: row.name,
             currency: row.currency,
             notes: row.notes,
-            import: self
-          )
-        )
+            import: self,
+          ),
+        ).save!
       end
-
-      Transaction.import!(transactions, recursive: true)
     end
   end
 

@@ -16,9 +16,11 @@ class EntrySearch
       return scope if search.blank?
 
       query = scope
-      query = query.where("entries.name ILIKE :search",
-        search: "%#{ActiveRecord::Base.sanitize_sql_like(search)}%"
-      )
+      sanitized_search = "%#{ActiveRecord::Base.sanitize_sql_like(search.downcase)}%"
+
+      # Database-agnostic case-insensitive search using LOWER
+      query = query.where("LOWER(entries.name) LIKE ?", sanitized_search)
+
       query
     end
 

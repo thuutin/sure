@@ -5,54 +5,81 @@ class IncomeStatement::Totals
   end
 
   def call
-    ActiveRecord::Base.connection.select_all(query_sql).map do |row|
-      TotalsRow.new(
-        parent_category_id: row["parent_category_id"],
-        category_id: row["category_id"],
-        classification: row["classification"],
-        total: row["total"],
-        transactions_count: row["transactions_count"]
-      )
-    end
+    build_totals
   end
 
   private
     TotalsRow = Data.define(:parent_category_id, :category_id, :classification, :total, :transactions_count)
 
-    def query_sql
-      ActiveRecord::Base.sanitize_sql_array([
-        optimized_query_sql,
-        sql_params
-      ])
+    def transactions
+      @transactions ||= @transactions_scope
+        .where.not(kind: [ "funds_movement", "one_time", "cc_payment" ])
+        .select(:id, :category_id)
+        .group_by { |t| t.id }
+        .transform_values { |t| t.first }
     end
 
-    # OPTIMIZED: Direct SUM aggregation without unnecessary time bucketing
-    # Eliminates CTE and intermediate date grouping for maximum performance
-    def optimized_query_sql
-      <<~SQL
-        SELECT
-          c.id as category_id,
-          c.parent_id as parent_category_id,
-          CASE WHEN ae.amount < 0 THEN 'income' ELSE 'expense' END as classification,
-          ABS(SUM(ae.amount * COALESCE(er.rate, 1))) as total,
-          COUNT(ae.id) as transactions_count
-        FROM (#{@transactions_scope.to_sql}) at
-        JOIN entries ae ON ae.entryable_id = at.id AND ae.entryable_type = 'Transaction'
-        LEFT JOIN categories c ON c.id = at.category_id
-        LEFT JOIN exchange_rates er ON (
-          er.date = ae.date AND
-          er.from_currency = ae.currency AND
-          er.to_currency = :target_currency
-        )
-        WHERE at.kind NOT IN ('funds_movement', 'one_time', 'cc_payment')
-          AND ae.excluded = false
-        GROUP BY c.id, c.parent_id, CASE WHEN ae.amount < 0 THEN 'income' ELSE 'expense' END;
-      SQL
+    def entries
+      @entries ||= Entry
+      .where(entryable_id: transactions.keys, entryable_type: "Transaction", excluded: false)
+      .select(:id, :amount, :currency, :date, :entryable_id)
     end
 
-    def sql_params
-      {
-        target_currency: @family.currency
-      }
+    def categories
+      @categories ||= Category.where(id: transactions.values.map { |t| t.category_id }.uniq).select(:id, :parent_id)
+    end
+
+    def rate_for(from, to, date)
+      if from == to
+        return 1
+      end
+      rates = exchange_rates.dig([ from, to ]) || []
+      closest_rate = rates.bsearch { |rate| rate.date <= date }
+      closest_rate&.rate || 1
+    end
+
+    def exchange_rates
+      @rates ||= begin
+        currencies = entries.map { |e| e.currency }.uniq
+        min_date = entries.minimum(:date)
+        max_date = entries.maximum(:date)
+        ExchangeRate.where(date: (min_date - 30.days)..max_date) # extend the range so exchange rates are likely to be available
+          .and(ExchangeRate.where(to_currency: @family.currency))
+          .and(ExchangeRate.where(from_currency: currencies))
+          .select(:id, :date, :rate, :from_currency, :to_currency)
+          .group_by { |er| [ er.from_currency, er.to_currency ] }
+          .transform_values { |rates| rates.sort_by(&:date).reverse }
+      end
+    end
+
+    def should_include_entry?(entry, classification)
+      case classification
+      when "income"
+        entry.amount < 0
+      when "expense"
+        entry.amount >= 0
+      end
+    end
+
+    def build_totals
+      [ "income", "expense" ].map do |classification|
+        no_category = OpenStruct.new(id: nil, parent_id: nil)
+        include_no_category = categories.to_a + [ no_category ]
+        include_no_category.map do |category|
+          entries_by_category = entries.filter { |e| transactions[e.entryable_id]&.category_id == category.id && should_include_entry?(e, classification) }
+          transactions_count = entries_by_category.count
+          total = 0
+          entries_by_category.each do |e|
+            total += e.amount * (rate_for(e.currency, @family.currency, e.date) || 1)
+          end
+          TotalsRow.new(
+            parent_category_id: category.parent_id,
+            category_id: category.id,
+            classification: classification,
+            total: total.abs,
+            transactions_count: transactions_count
+          )
+        end
+      end.flatten
     end
 end

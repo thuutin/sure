@@ -2,6 +2,10 @@ require "application_system_test_case"
 
 class TransfersTest < ApplicationSystemTestCase
   setup do
+    Account.all.each do |account|
+      account.save! # ensure classification is set
+    end
+
     sign_in @user = users(:family_admin)
     visit transactions_url
   end

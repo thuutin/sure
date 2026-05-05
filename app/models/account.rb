@@ -3,6 +3,8 @@ class Account < ApplicationRecord
 
   validates :name, :balance, :currency, presence: true
 
+  before_save :set_classification
+
   belongs_to :family
   belongs_to :import, optional: true
   belongs_to :simplefin_account, optional: true
@@ -153,13 +155,13 @@ class Account < ApplicationRecord
   end
 
   def current_holdings
+    holding_ids = holdings.pluck(:security_id)
+      .uniq
+      .map { |security_id| holdings.where(security_id: security_id).order(date: :desc).first.id }
+
     holdings.where(currency: currency)
             .where.not(qty: 0)
-            .where(
-              id: holdings.select("DISTINCT ON (security_id) id")
-                          .where(currency: currency)
-                          .order(:security_id, date: :desc)
-            )
+            .where(id: holding_ids)
             .order(amount: :desc)
   end
 
@@ -209,4 +211,14 @@ class Account < ApplicationRecord
       raise "Unknown account type: #{accountable_type}"
     end
   end
+
+  private
+    def set_classification
+      self.classification = case accountable_type
+      when "Loan", "CreditCard", "OtherLiability"
+        "liability"
+      else
+        "asset"
+      end
+    end
 end

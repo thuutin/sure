@@ -36,8 +36,7 @@ class PlaidItem < ApplicationRecord
       # Mark the connection as invalid but don't auto-delete
       update!(status: :requires_update)
     end
-
-    Sentry.capture_exception(e)
+    Rails.error.report(e)
     nil
   end
 
