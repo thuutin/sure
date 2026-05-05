@@ -60,10 +60,10 @@ class Sync < ApplicationRecord
   end
 
   def perform
-    Rails.logger.tagged("Sync", id, syncable_type, syncable_id) do
-      # This can happen on server restarts or if Sidekiq enqueues a duplicate job
+    Rails.event.tagged("Sync", id, syncable_type, syncable_id) do
+      # This can happen on server restarts or if ~~Sidekiq~~ SolidQueue enqueues a duplicate job
       unless may_start?
-        Rails.logger.warn("Sync #{id} is not in a valid state (#{aasm.from_state}) to start.  Skipping sync.")
+        Rails.event.notify("Sync", { id: id, syncable_type: syncable_type, syncable_id: syncable_id, message: "not in a valid state to start" })
         return
       end
 
@@ -88,6 +88,7 @@ class Sync < ApplicationRecord
       start!
 
       begin
+        Rails.event.notify("Performing sync", { syncable_type: syncable_type, syncable_id: syncable.id })
         syncable.perform_sync(self)
       rescue => e
         fail!
@@ -160,27 +161,25 @@ class Sync < ApplicationRecord
     end
 
     def perform_post_sync
-      Rails.logger.info("Performing post-sync for #{syncable_type} (#{syncable.id})")
+      Rails.event.notify("Performing post-sync", { syncable_type: syncable_type, syncable_id: syncable.id })
       syncable.perform_post_sync
       syncable.broadcast_sync_complete
     rescue => e
-      Rails.logger.error("Error performing post-sync for #{syncable_type} (#{syncable.id}): #{e.message}")
+      Rails.event.notify("Error performing post-sync", { syncable_type: syncable_type, syncable_id: syncable.id, error: e.message })
       report_error(e)
     end
 
     def report_error(error)
-      Sentry.capture_exception(error) do |scope|
-        scope.set_tags(sync_id: id)
-      end
+      Rails.error.report(error, context: { sync_id: id })
     end
 
     def report_warnings
       todays_sync_count = syncable.syncs.where(created_at: Date.current.all_day).count
 
-      if todays_sync_count > 10
-        Sentry.capture_exception(
+      if todays_sync_count > 100
+        Rails.error.report(
           Error.new("#{syncable_type} (#{syncable.id}) has exceeded 10 syncs today (count: #{todays_sync_count})"),
-          level: :warning
+          context: { count: todays_sync_count, syncable_type: syncable_type, syncable_id: syncable.id }
         )
       end
     end

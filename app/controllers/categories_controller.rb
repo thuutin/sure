@@ -5,7 +5,6 @@ class CategoriesController < ApplicationController
 
   def index
     @categories = Current.family.categories.alphabetically
-
     render layout: "settings"
   end
 
@@ -15,8 +14,12 @@ class CategoriesController < ApplicationController
   end
 
   def create
-    @category = Current.family.categories.new(category_params)
-
+    params = if category_params[:parent_id].blank?
+      category_params.except(:parent_id)
+    else
+      category_params
+    end
+    @category = Current.family.categories.new(params)
     if @category.save
       @transaction.update(category_id: @category.id) if @transaction
 
