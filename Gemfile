@@ -24,10 +24,6 @@ gem "stimulus-rails"
 gem "turbo-rails"
 gem "view_component"
 
-# https://github.com/lookbook-hq/lookbook/issues/712
-# TODO: Remove max version constraint when fixed
-gem "lookbook", "2.3.11"
-
 gem "hotwire_combobox"
 
 # Background Jobs
@@ -121,6 +117,9 @@ group :development do
   gem "letter_opener"
   gem "ruby-lsp-rails"
   gem "web-console"
+  # https://github.com/lookbook-hq/lookbook/issues/712
+  # TODO: Remove max version constraint when fixed
+  gem "lookbook", "2.3.11"
   gem "faker"
   gem "benchmark-ips"
   gem "stackprof"
