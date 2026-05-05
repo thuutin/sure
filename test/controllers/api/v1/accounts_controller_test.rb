@@ -8,22 +8,14 @@ class Api::V1::AccountsControllerTest < ActionDispatch::IntegrationTest
     @other_family_user = users(:family_member)
     @other_family_user.update!(family: families(:empty))
 
-    @user.api_keys.active.destroy_all
-    @api_key = ApiKey.create!(
-      user: @user,
-      name: "Test Read Key",
-      scopes: [ "read" ],
-      source: "web",
-      display_key: "test_read_#{SecureRandom.hex(8)}"
-    )
+    Account.all.each do |account|
+      account.save! # trigger callback to set classification
+    end
 
-    @other_family_user.api_keys.active.destroy_all
-    @other_family_api_key = ApiKey.create!(
-      user: @other_family_user,
-      name: "Other Family Read Key",
-      scopes: [ "read" ],
-      source: "web",
-      display_key: "other_family_read_#{SecureRandom.hex(8)}"
+    @oauth_app = Doorkeeper::Application.create!(
+      name: "Test API App",
+      redirect_uri: "https://example.com/callback",
+      scopes: "read read_write"
     )
   end
 
