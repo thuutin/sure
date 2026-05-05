@@ -30,30 +30,28 @@ class Api::V1::AccountsController < Api::V1::BaseController
       error: "internal_server_error",
       message: "Error: #{e.message}"
     }, status: :internal_server_error
-end
+  end
 
-    private
+  private
 
-      def ensure_read_scope
-        authorize_scope!(:read)
+    def ensure_read_scope
+      authorize_scope!(:read)
+    end
+
+    def safe_page_param
+      page = params[:page].to_i
+      page > 0 ? page : 1
+    end
+
+    def safe_per_page_param
+      per_page = params[:per_page].to_i
+
+      # Default to 25, max 100
+      case per_page
+      when 1..100
+        per_page
+      else
+        25
       end
-
-
-
-      def safe_page_param
-        page = params[:page].to_i
-        page > 0 ? page : 1
-      end
-
-      def safe_per_page_param
-        per_page = params[:per_page].to_i
-
-        # Default to 25, max 100
-        case per_page
-        when 1..100
-          per_page
-        else
-          25
-        end
-      end
+    end
 end
