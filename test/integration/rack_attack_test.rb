@@ -20,4 +20,32 @@ class RackAttackTest < ActionDispatch::IntegrationTest
     throttles = Rack::Attack.throttles.keys
     assert_includes throttles, "api/requests", "API requests should have rate limiting"
   end
+
+  test "scanner-style php paths are blocked" do
+    get "/ok.php"
+
+    assert_response :forbidden
+    assert_equal({ "error" => "Request blocked." }, JSON.parse(response.body))
+  end
+
+  test "nested wordpress scanner paths are blocked" do
+    get "/wp-content/plugins/hellopress/wp_filemanager.php"
+
+    assert_response :forbidden
+    assert_equal({ "error" => "Request blocked." }, JSON.parse(response.body))
+  end
+
+  test "php variant extensions are blocked" do
+    get "/ioxi001.PhP7"
+
+    assert_response :forbidden
+    assert_equal({ "error" => "Request blocked." }, JSON.parse(response.body))
+  end
+
+  test "double-slash wordpress scanner paths are blocked" do
+    get "//wp-links-opml.php"
+
+    assert_response :forbidden
+    assert_equal({ "error" => "Request blocked." }, JSON.parse(response.body))
+  end
 end
