@@ -94,6 +94,12 @@ SECRET_KEY_BASE="replacemewiththegeneratedstringfromthepriorstep"
 POSTGRES_PASSWORD="replacemewithyourdesireddatabasepassword"
 ```
 
+We also recommend leaving YJIT disabled by default on smaller hosts. If you want to trade more memory for potentially better Ruby throughput, opt in explicitly:
+
+```txt
+ENABLE_YJIT="true"
+```
+
 ### Step 4: Run the app
 
 You are now ready to run the app. Start with the following command to make sure everything is working:
