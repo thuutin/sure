@@ -66,6 +66,37 @@ class ExchangeRate::ImporterTest < ActiveSupport::TestCase
     assert_equal [ 1.2, 1.25, 1.3, 1.3 ], db_rates.map(&:rate)
   end
 
+  test "uses most recent available rate before effective start date for gapfilling" do
+    ExchangeRate.delete_all
+
+    # DB has rates for 3 days ago and 2 days ago.
+    ExchangeRate.create!(from_currency: "USD", to_currency: "EUR", date: 3.days.ago.to_date, rate: 1.2)
+    ExchangeRate.create!(from_currency: "USD", to_currency: "EUR", date: 2.days.ago.to_date, rate: 1.25)
+
+    # Missing 1 day ago (effective start date) in DB.
+    # Provider also doesn't provide a rate for 1.day.ago, only for today.
+    # It should fallback to the rate from 2.days.ago (1.25) instead of 3.days.ago (1.2).
+    provider_response = provider_success_response([
+      OpenStruct.new(from: "USD", to: "EUR", date: Date.current, rate: 1.3)
+    ])
+
+    @provider.expects(:fetch_exchange_rates)
+             .with(from: "USD", to: "EUR", start_date: get_provider_fetch_start_date(1.day.ago.to_date), end_date: Date.current)
+             .returns(provider_response)
+
+    ExchangeRate::Importer.new(
+      exchange_rate_provider: @provider,
+      from: "USD",
+      to: "EUR",
+      start_date: 3.days.ago.to_date,
+      end_date: Date.current
+    ).import_provider_rates
+
+    db_rates = ExchangeRate.order(:date)
+    assert_equal 4, db_rates.count
+    assert_equal [ 1.2, 1.25, 1.25, 1.3 ], db_rates.map(&:rate)
+  end
+
   test "no provider calls when all rates exist" do
     ExchangeRate.delete_all
 

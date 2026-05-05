@@ -46,7 +46,9 @@ class ExchangeRate::Importer
       if chosen_rate.nil?
         chosen_rate = prev_rate_value
       end
-
+      if chosen_rate.nil? || chosen_rate == 0 || chosen_rate.to_f.abs < 0.0001
+        raise "chosen_rate is nil or 0 for #{from} to #{to} on #{date}, prev_rate_value: #{prev_rate_value.inspect}, provider_rate_value: #{provider_rate_value.inspect}, db_rate_value: #{db_rate_value.inspect}, clear_cache: #{clear_cache.inspect}"
+      end
       prev_rate_value = chosen_rate
 
       {
@@ -81,10 +83,10 @@ class ExchangeRate::Importer
       total_upsert_count
     end
 
-    # Since provider may not return values on weekends and holidays, we grab the first rate from the provider that is on or before the start date
+    # Since provider may not return values on weekends and holidays, we grab the most recent rate on or before the effective start date
     def start_rate_value
-      provider_rate_value = provider_rates.select { |date, _| date <= start_date }.max_by { |date, _| date }&.last
-      db_rate_value = db_rates[start_date]&.rate
+      provider_rate_value = provider_rates.select { |date, _| date <= effective_start_date }.max_by { |date, _| date }&.last&.rate
+      db_rate_value = db_rates.select { |date, _| date <= effective_start_date }.max_by { |date, _| date }&.last&.rate
       provider_rate_value || db_rate_value
     end
 
