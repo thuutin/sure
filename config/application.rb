@@ -9,7 +9,7 @@ Bundler.require(*Rails.groups)
 module Sure
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.2
+    config.load_defaults 8.1
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
@@ -34,10 +34,12 @@ module Sure
       config.active_record.encryption = Rails.application.credentials.active_record_encryption
     end
 
-    config.view_component.preview_controller = "LookbooksController"
-    config.lookbook.preview_display_options = {
-      theme: [ "light", "dark" ] # available in view as params[:theme]
-    }
+    if Rails.env.development?
+      config.view_component.preview_controller = "LookbooksController"
+      config.lookbook.preview_display_options = {
+        theme: [ "light", "dark" ] # available in view as params[:theme]
+      }
+    end
 
     # Enable Skylight instrumentation for ActiveJob (background workers)
     config.skylight.probes << "active_job" if defined?(Skylight)
@@ -45,11 +47,8 @@ module Sure
     # Enable Rack::Attack middleware for API rate limiting
     config.middleware.use Rack::Attack
 
-    config.x.ui = ActiveSupport::OrderedOptions.new
-    default_layout = ENV.fetch("DEFAULT_UI_LAYOUT", "dashboard")
-    config.x.ui.default_layout = default_layout.in?(%w[dashboard intro]) ? default_layout : "dashboard"
-    # Handle OmniAuth/OIDC errors gracefully (must be before OmniAuth middleware)
-    require_relative "../app/middleware/omniauth_error_handler"
-    config.middleware.use OmniauthErrorHandler
+    config.mission_control.jobs.http_basic_auth_enabled = false if Rails.env.development?
+    MissionControl::Jobs.http_basic_auth_user = "jobs" if Rails.env.production?
+    MissionControl::Jobs.http_basic_auth_password = ENV["MISSION_CONTROL_JOBS_PASSWORD"] || "jobs" if Rails.env.production?
   end
 end

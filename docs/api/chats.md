@@ -56,4 +56,12 @@ Errors conform to the shared `ErrorResponse` schema in the OpenAPI document:
 }
 ```
 
-Common error codes include `unauthorized`, `forbidden`, `feature_disabled`, `not_found`, `unprocessable_entity`, and `rate_limit_exceeded`.
+Common error codes:
+- `unauthorized` - Invalid or missing authentication
+- `forbidden` - Insufficient permissions or AI not enabled
+- `not_found` - Resource not found
+- `unprocessable_entity` - Invalid request data
+
+## Rate Limits
+
+Chat API endpoints are subject to the standard API rate limits based on your API key tier.

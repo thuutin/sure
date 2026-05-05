@@ -95,6 +95,12 @@ SECRET_KEY_BASE="replacemewiththegeneratedstringfromthepriorstep"
 POSTGRES_PASSWORD="replacemewithyourdesireddatabasepassword"
 ```
 
+We also recommend leaving YJIT disabled by default on smaller hosts. If you want to trade more memory for potentially better Ruby throughput, opt in explicitly:
+
+```txt
+ENABLE_YJIT="true"
+```
+
 #### Using HTTPS
 
 Assuming you want to access your instance from the internet, you should have secured your URL address with an SSL certificate.  
@@ -158,7 +164,6 @@ BINDING=::       bin/dev  # IPv6 dual-stack
 ```
 
 The bundled devcontainer at `.devcontainer/docker-compose.yml` already pins `BINDING: "0.0.0.0"` so Docker port forwarding reaches the app — no manual override needed when using the devcontainer.
-
 ### Step 4: Run the app
 
 You are now ready to run the app. Start with the following command to make sure everything is working:
