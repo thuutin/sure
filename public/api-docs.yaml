@@ -1,0 +1,1079 @@
+openapi: 3.0.3
+info:
+  title: Maybe Finance API
+  description: |
+    The Maybe Finance API allows external applications to interact with your financial data.
+    
+    ## Authentication
+    
+    The API supports two authentication methods:
+    
+    1. **OAuth 2.0**: Pass the access token in the `Authorization` header as `Bearer <token>`
+    2. **API Key**: Pass the API key in the `X-Api-Key` header
+    
+    ## Scopes
+    
+    - `read`: Read access to resources
+    - `read_write`: Full read and write access
+    
+    ## Rate Limiting
+    
+    API requests are subject to rate limiting based on your authentication method and tier.
+  version: 1.0.0
+  contact:
+    name: Maybe Finance Support
+    url: https://maybe.co/support
+
+servers:
+  - url: https://api.maybe.co
+    description: Production server
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+paths:
+  /api/v1/auth/signup:
+    post:
+      summary: User signup
+      description: Create a new user account with OAuth application
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user
+                - device
+              properties:
+                user:
+                  type: object
+                  required:
+                    - email
+                    - password
+                    - first_name
+                    - last_name
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                    password:
+                      type: string
+                      minLength: 8
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                device:
+                  type: object
+                  required:
+                    - device_id
+                    - device_name
+                    - device_type
+                    - os_version
+                    - app_version
+                  properties:
+                    device_id:
+                      type: string
+                    device_name:
+                      type: string
+                    device_type:
+                      type: string
+                      enum: [ios, android, web]
+                    os_version:
+                      type: string
+                    app_version:
+                      type: string
+                invite_code:
+                  type: string
+                  description: Required if invite codes are enabled
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                  created_at:
+                    type: integer
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      last_name:
+                        type: string
+        '403':
+          description: Invite code required or invalid
+        '422':
+          description: Validation failed
+
+  /api/v1/auth/login:
+    post:
+      summary: User login
+      description: Authenticate and receive OAuth tokens
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - device
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                otp_code:
+                  type: string
+                  description: Required if MFA is enabled
+                device:
+                  type: object
+                  required:
+                    - device_id
+                    - device_name
+                    - device_type
+                    - os_version
+                    - app_version
+                  properties:
+                    device_id:
+                      type: string
+                    device_name:
+                      type: string
+                    device_type:
+                      type: string
+                    os_version:
+                      type: string
+                    app_version:
+                      type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      last_name:
+                        type: string
+        '401':
+          description: Invalid credentials or MFA required
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh access token
+      description: Get a new access token using a refresh token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                device:
+                  type: object
+                  properties:
+                    device_id:
+                      type: string
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  created_at:
+                    type: integer
+        '400':
+          description: Refresh token required
+        '401':
+          description: Invalid refresh token
+
+  /api/v1/accounts:
+    get:
+      summary: List accounts
+      description: Get all accounts belonging to the authenticated user's family
+      tags:
+        - Accounts
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+      responses:
+        '200':
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/transactions:
+    get:
+      summary: List transactions
+      description: Get all transactions with optional filtering
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+        - name: account_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: account_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: category_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: category_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: merchant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: merchant_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: min_amount
+          in: query
+          schema:
+            type: number
+        - name: max_amount
+          in: query
+          schema:
+            type: number
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create transaction
+      description: Create a new transaction
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transaction
+              properties:
+                transaction:
+                  type: object
+                  required:
+                    - account_id
+                    - date
+                    - amount
+                    - name
+                  properties:
+                    account_id:
+                      type: string
+                      format: uuid
+                    date:
+                      type: string
+                      format: date
+                    amount:
+                      type: number
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    notes:
+                      type: string
+                    currency:
+                      type: string
+                    nature:
+                      type: string
+                      enum: [income, inflow, expense, outflow]
+                    category_id:
+                      type: string
+                      format: uuid
+                    merchant_id:
+                      type: string
+                      format: uuid
+                    tag_ids:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '201':
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/v1/transactions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get transaction
+      description: Get a single transaction by ID
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update transaction
+      description: Update an existing transaction
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    amount:
+                      type: number
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    notes:
+                      type: string
+                    nature:
+                      type: string
+                      enum: [income, inflow, expense, outflow]
+                    category_id:
+                      type: string
+                      format: uuid
+                    merchant_id:
+                      type: string
+                      format: uuid
+                    tag_ids:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: Transaction updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+    delete:
+      summary: Delete transaction
+      description: Delete a transaction
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: Transaction deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/usage:
+    get:
+      summary: Get API usage
+      description: Get usage information for the current API key or OAuth token
+      tags:
+        - Usage
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: Usage information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_key:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      scopes:
+                        type: array
+                        items:
+                          type: string
+                      last_used_at:
+                        type: string
+                        format: date-time
+                      created_at:
+                        type: string
+                        format: date-time
+                  authentication_method:
+                    type: string
+                  message:
+                    type: string
+        '400':
+          description: Invalid authentication method
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/chats:
+    get:
+      summary: List chats
+      description: Get all chats for the authenticated user
+      tags:
+        - Chats
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of chats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chats:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Chat'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: AI features not enabled
+
+    post:
+      summary: Create chat
+      description: Create a new chat with an optional initial message
+      tags:
+        - Chats
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                message:
+                  type: string
+                  description: Initial message to send to AI
+                model:
+                  type: string
+                  enum: [gpt-4, gpt-4-turbo, gpt-3.5-turbo]
+                  default: gpt-4
+      responses:
+        '201':
+          description: Chat created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatWithMessages'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: AI features not enabled
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/v1/chats/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get chat
+      description: Get a single chat with its messages
+      tags:
+        - Chats
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: Chat details with messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatWithMessages'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: AI features not enabled
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update chat
+      description: Update chat title
+      tags:
+        - Chats
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+      responses:
+        '200':
+          description: Chat updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatWithMessages'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete chat
+      description: Delete a chat and all its messages
+      tags:
+        - Chats
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      responses:
+        '204':
+          description: Chat deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/chats/{chat_id}/messages:
+    parameters:
+      - name: chat_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Create message
+      description: Send a message to the AI assistant
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                model:
+                  type: string
+                  enum: [gpt-4, gpt-4-turbo, gpt-3.5-turbo]
+                  default: gpt-4
+      responses:
+        '201':
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: AI features not enabled
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/v1/chats/{chat_id}/messages/retry:
+    parameters:
+      - name: chat_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Retry last message
+      description: Retry generating the last AI assistant response
+      tags:
+        - Messages
+      security:
+        - bearerAuth: []
+        - apiKeyAuth: []
+      responses:
+        '202':
+          description: Retry initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  message_id:
+                    type: string
+                    format: uuid
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: AI features not enabled
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: No assistant message to retry
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 access token
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API key for authentication
+
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        balance:
+          type: string
+        currency:
+          type: string
+        classification:
+          type: string
+          enum: [asset, liability]
+        account_type:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        amount:
+          type: string
+        currency:
+          type: string
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+        category:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        merchant:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        account:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+
+    Chat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        last_message_at:
+          type: string
+          format: date-time
+        message_count:
+          type: integer
+        error:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ChatWithMessages:
+      allOf:
+        - $ref: '#/components/schemas/Chat'
+        - type: object
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        chat_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [user_message, assistant_message]
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        model:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        ai_response_status:
+          type: string
+          description: Only present for user messages
+        ai_response_message:
+          type: string
+          description: Only present for user messages
+        tool_calls:
+          type: array
+          description: Only present for assistant messages
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              function_name:
+                type: string
+              function_arguments:
+                type: object
+              function_result:
+                type: object
+              created_at:
+                type: string
+                format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total_count:
+          type: integer
+        total_pages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: unauthorized
+            message: Access token or API key is invalid, expired, or missing
+
+    Forbidden:
+      description: Forbidden - Insufficient scope or permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: insufficient_scope
+            message: This action requires the 'write' scope
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: not_found
+            message: Resource not found
+
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: validation_failed
+            message: Validation failed
+            details: ["Name can't be blank"]

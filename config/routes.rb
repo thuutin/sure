@@ -1,118 +1,6 @@
-require "sidekiq/web"
-require "sidekiq/cron/web"
-
 Rails.application.routes.draw do
-  resources :indexa_capital_items, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
-    collection do
-      get :preload_accounts
-      get :select_accounts
-      post :link_accounts
-      get :select_existing_account
-      post :link_existing_account
-    end
+  mount Rswag::Ui::Engine => "/api-docs"
 
-    member do
-      post :sync
-      get :setup_accounts
-      post :complete_account_setup
-    end
-  end
-  resources :mercury_items, only: %i[index new create show edit update destroy] do
-    collection do
-      get :preload_accounts
-      get :select_accounts
-      post :link_accounts
-      get :select_existing_account
-      post :link_existing_account
-    end
-
-    member do
-      post :sync
-      get :setup_accounts
-      post :complete_account_setup
-    end
-  end
-
-  resources :coinbase_items, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
-    collection do
-      get :preload_accounts
-      get :select_accounts
-      post :link_accounts
-      get :select_existing_account
-      post :link_existing_account
-    end
-
-    member do
-      post :sync
-      get :setup_accounts
-      post :complete_account_setup
-    end
-  end
-
-  resources :binance_items, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
-    collection do
-      get :select_accounts
-      post :link_accounts
-      get :select_existing_account
-      post :link_existing_account
-    end
-
-    member do
-      post :sync
-      get :setup_accounts
-      post :complete_account_setup
-    end
-  end
-
-  resources :snaptrade_items, only: [ :index, :new, :create, :show, :edit, :update, :destroy ] do
-    collection do
-      get :preload_accounts
-      get :select_accounts
-      post :link_accounts
-      get :select_existing_account
-      post :link_existing_account
-      get :callback
-    end
-
-    member do
-      post :sync
-      get :connect
-      get :setup_accounts
-      post :complete_account_setup
-      get :connections
-      delete :delete_connection
-      delete :delete_orphaned_user
-    end
-  end
-
-  # CoinStats routes
-  resources :coinstats_items, only: [ :index, :new, :create, :update, :destroy ] do
-    collection do
-      post :link_wallet
-      post :link_exchange
-    end
-    member do
-      post :sync
-    end
-  end
-
-  resources :enable_banking_items, only: [ :new, :create, :update, :destroy ] do
-    collection do
-      get :callback
-      post :link_accounts
-      get :select_existing_account
-      post :link_existing_account
-    end
-    member do
-      post :sync
-      get :select_bank
-      post :authorize
-      post :reauthorize
-      get :setup_accounts
-      post :complete_account_setup
-      post :new_connection
-    end
-  end
   use_doorkeeper
   # MFA routes
   resource :mfa, controller: "mfa", only: [ :new, :create ] do
@@ -125,13 +13,8 @@ Rails.application.routes.draw do
 
   mount Lookbook::Engine, at: "/design-system" if Rails.env.development?
 
-  if Rails.env.development?
-    mount Rswag::Api::Engine => "/api-docs"
-    mount Rswag::Ui::Engine => "/api-docs"
-  end
-
-  # Uses basic auth - see config/initializers/sidekiq.rb
-  mount Sidekiq::Web => "/sidekiq"
+  mount MissionControl::Jobs::Engine, at: "/jobs"
+  mount Litestream::Engine, at: "/litestream" if Rails.env.production?
 
   # AI chats
   resources :chats do
@@ -549,11 +432,6 @@ Rails.application.routes.draw do
     post "plaid_eu"
     post "stripe"
   end
-
-  get "redis-configuration-error", to: "pages#redis_configuration_error"
-
-  # MCP server endpoint for external AI assistants (JSON-RPC 2.0)
-  post "mcp", to: "mcp#handle"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.

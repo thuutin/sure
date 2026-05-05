@@ -1,9 +1,6 @@
 class PagesController < ApplicationController
   include Periodable
 
-  skip_authentication only: %i[redis_configuration_error privacy terms]
-  before_action :ensure_intro_guest!, only: :intro
-
   def dashboard
     if Current.user&.ui_layout_intro?
       redirect_to chats_path and return
@@ -60,18 +57,6 @@ class PagesController < ApplicationController
 
   def feedback
     render layout: "settings"
-  end
-
-  def redis_configuration_error
-    render layout: "blank"
-  end
-
-  def privacy
-    render layout: "blank"
-  end
-
-  def terms
-    render layout: "blank"
   end
 
   private

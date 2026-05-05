@@ -22,5 +22,7 @@ if ENV["SENTRY_DSN"].present?
 
     config.release = Rails.root.join(".sure-version").read.strip rescue nil
     config.profiler_class = Sentry::Vernier::Profiler
+    config.enable_logs = true
+    config.enabled_patches = [ :logger, :http, :puma ]
   end
 end

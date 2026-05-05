@@ -4,7 +4,7 @@ module ApplicationCable
 
     private
       def report_error(e)
-        Sentry.capture_exception(e)
+        Rails.error.report(error)
       end
   end
 end
