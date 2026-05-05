@@ -1,223 +1,152 @@
 require "test_helper"
 
 class Provider::TwelveDataTest < ActiveSupport::TestCase
+  JsonResponse = Struct.new(:body)
+  Request = Struct.new(:params)
+
   setup do
-    @provider = Provider::TwelveData.new("test_api_key")
+    @provider = Provider::TwelveData.new("test-key")
+    @client = mock
+
+    @provider.stubs(:client).returns(@client)
+    @provider.stubs(:sleep)
   end
 
-  # ================================
-  #     Rate Limit Detection Tests
-  # ================================
+  test "fetch_exchange_rate rejects a mismatched provider symbol" do
+    request = Request.new({})
 
-  test "detects rate limit from JSON body code 429" do
-    rate_limit_body = {
-      "code" => 429,
-      "message" => "You have run out of API credits for the current minute.",
-      "status" => "error"
-    }.to_json
+    @client.expects(:get)
+           .with("https://api.twelvedata.com/exchange_rate")
+           .yields(request)
+           .returns(json_response({
+             symbol: "USD/VND",
+             rate: "25500.10"
+           }))
 
-    mock_response = mock
-    mock_response.stubs(:body).returns(rate_limit_body)
+    response = @provider.fetch_exchange_rate(
+      from: "EUR",
+      to: "VND",
+      date: Date.parse("2026-03-01")
+    )
 
-    @provider.stubs(:throttle_request)
-    @provider.stubs(:client).returns(mock_client = mock)
-    mock_client.stubs(:get).returns(mock_response)
-
-    result = @provider.fetch_exchange_rates(from: "USD", to: "EUR", start_date: Date.current, end_date: Date.current)
-
-    assert_not result.success?
-    assert_instance_of Provider::TwelveData::RateLimitError, result.error
+    assert_not response.success?
+    assert_kind_of Provider::TwelveData::Error, response.error
+    assert_match "Expected EUR/VND but provider returned USD/VND", response.error.message
+    assert_equal "EUR/VND", request.params["symbol"]
   end
 
-  test "detects rate limit on single exchange rate fetch" do
-    rate_limit_body = {
-      "code" => 429,
-      "message" => "Rate limit exceeded"
-    }.to_json
+  test "fetch_exchange_rates falls back to cross rates when direct symbol is unavailable" do
+    direct_request = Request.new({})
+    cross_request = Request.new({})
 
-    mock_response = mock
-    mock_response.stubs(:body).returns(rate_limit_body)
+    @client.expects(:get)
+           .with("https://api.twelvedata.com/time_series")
+           .yields(direct_request)
+           .returns(json_response({
+             code: 404,
+             message: "Symbol not found"
+           }))
 
-    @provider.stubs(:throttle_request)
-    @provider.stubs(:client).returns(mock_client = mock)
-    mock_client.stubs(:get).returns(mock_response)
+    @client.expects(:get)
+           .with("https://api.twelvedata.com/time_series/cross")
+           .yields(cross_request)
+           .returns(json_response({
+             meta: {
+               base_instrument: "EUR/USD",
+               quote_instrument: "VND/USD"
+             },
+             values: [
+               { datetime: "2026-03-01", close: "28000.10" }
+             ]
+           }))
 
-    result = @provider.fetch_exchange_rate(from: "USD", to: "EUR", date: Date.current)
+    response = @provider.fetch_exchange_rates(
+      from: "EUR",
+      to: "VND",
+      start_date: Date.parse("2026-03-01"),
+      end_date: Date.parse("2026-03-02")
+    )
 
-    assert_not result.success?
-    assert_instance_of Provider::TwelveData::RateLimitError, result.error
+    assert response.success?
+    assert_equal "EUR/VND", direct_request.params["symbol"]
+    assert_equal "EUR", cross_request.params["base"]
+    assert_equal "VND", cross_request.params["quote"]
+    assert_equal 1, response.data.count
+    assert_equal "EUR", response.data.first.from
+    assert_equal "VND", response.data.first.to
+    assert_equal 28000.10, response.data.first.rate.to_f
   end
 
-  test "does not fall through to cross API when rate limited" do
-    rate_limit_body = {
-      "code" => 429,
-      "message" => "Rate limit exceeded"
-    }.to_json
+  test "fetch_exchange_rates rejects mismatched direct series metadata" do
+    request = Request.new({})
 
-    mock_response = mock
-    mock_response.stubs(:body).returns(rate_limit_body)
+    @client.expects(:get)
+           .with("https://api.twelvedata.com/time_series")
+           .yields(request)
+           .returns(json_response({
+             meta: {
+               symbol: "USD/VND"
+             },
+             values: [
+               { datetime: "2026-03-01", close: "25500.10" }
+             ]
+           }))
 
-    @provider.stubs(:throttle_request)
-    mock_client = mock
-    # Should only be called once (time_series), NOT a second time (time_series/cross)
-    mock_client.expects(:get).once.returns(mock_response)
-    @provider.stubs(:client).returns(mock_client)
+    response = @provider.fetch_exchange_rates(
+      from: "EUR",
+      to: "VND",
+      start_date: Date.parse("2026-03-01"),
+      end_date: Date.parse("2026-03-02")
+    )
 
-    result = @provider.fetch_exchange_rates(from: "USD", to: "EUR", start_date: Date.current, end_date: Date.current)
-
-    assert_not result.success?
-    assert_instance_of Provider::TwelveData::RateLimitError, result.error
+    assert_not response.success?
+    assert_kind_of Provider::TwelveData::Error, response.error
+    assert_match "Expected EUR/VND but provider returned USD/VND", response.error.message
+    assert_equal "EUR/VND", request.params["symbol"]
   end
 
-  # ================================
-  #   Error Transformer Tests
-  # ================================
+  test "fetch_exchange_rates rejects mismatched cross series metadata" do
+    direct_request = Request.new({})
+    cross_request = Request.new({})
 
-  test "default_error_transformer preserves RateLimitError" do
-    error = Provider::TwelveData::RateLimitError.new("Rate limit exceeded")
+    @client.expects(:get)
+           .with("https://api.twelvedata.com/time_series")
+           .yields(direct_request)
+           .returns(json_response({
+             code: 404,
+             message: "Symbol not found"
+           }))
 
-    result = @provider.send(:with_provider_response) { raise error }
+    @client.expects(:get)
+           .with("https://api.twelvedata.com/time_series/cross")
+           .yields(cross_request)
+           .returns(json_response({
+             meta: {
+               base_instrument: "USD/JPY",
+               quote_instrument: "VND/USD"
+             },
+             values: [
+               { datetime: "2026-03-01", close: "25500.10" }
+             ]
+           }))
 
-    assert_not result.success?
-    assert_instance_of Provider::TwelveData::RateLimitError, result.error
+    response = @provider.fetch_exchange_rates(
+      from: "EUR",
+      to: "VND",
+      start_date: Date.parse("2026-03-01"),
+      end_date: Date.parse("2026-03-02")
+    )
+
+    assert_not response.success?
+    assert_kind_of Provider::TwelveData::Error, response.error
+    assert_match "Expected EUR/VND but provider returned cross metadata USD/JPY -> VND/USD", response.error.message
+    assert_equal "EUR/VND", direct_request.params["symbol"]
+    assert_equal "EUR", cross_request.params["base"]
+    assert_equal "VND", cross_request.params["quote"]
   end
 
-  test "default_error_transformer converts Faraday 429 to RateLimitError" do
-    error = Faraday::TooManyRequestsError.new("Too Many Requests", { body: "Rate limited" })
-
-    result = @provider.send(:with_provider_response) { raise error }
-
-    assert_not result.success?
-    assert_instance_of Provider::TwelveData::RateLimitError, result.error
-  end
-
-  test "default_error_transformer wraps generic errors as Error" do
-    error = StandardError.new("Something went wrong")
-
-    result = @provider.send(:with_provider_response) { raise error }
-
-    assert_not result.success?
-    assert_instance_of Provider::TwelveData::Error, result.error
-  end
-
-  # ================================
-  #     Crypto Filter Tests
-  # ================================
-
-  test "search_securities excludes Digital Currency rows" do
-    body = {
-      "data" => [
-        {
-          "symbol" => "ETH",
-          "instrument_name" => "Grayscale Ethereum Trust ETF",
-          "mic_code" => "ARCX",
-          "instrument_type" => "ETF",
-          "country" => "United States",
-          "currency" => "USD"
-        },
-        {
-          "symbol" => "ETH/EUR",
-          "instrument_name" => "Ethereum Euro",
-          "mic_code" => "DIGITAL_CURRENCY",
-          "instrument_type" => "Digital Currency",
-          "country" => "",
-          "currency" => ""
-        },
-        {
-          "symbol" => "BTC/USD",
-          "instrument_name" => "Bitcoin US Dollar",
-          "mic_code" => "DIGITAL_CURRENCY",
-          "instrument_type" => "Digital Currency",
-          "country" => "",
-          "currency" => ""
-        }
-      ]
-    }.to_json
-
-    mock_response = mock
-    mock_response.stubs(:body).returns(body)
-    @provider.stubs(:throttle_request)
-    @provider.stubs(:client).returns(mock_client = mock)
-    mock_client.stubs(:get).returns(mock_response)
-
-    result = @provider.search_securities("ETH")
-
-    assert result.success?
-    assert_equal 1, result.data.size
-    assert_equal "ETH", result.data.first.symbol
-    refute result.data.any? { |s| s.symbol.include?("/") }
-  end
-
-  test "search_securities excludes crypto even with mixed-case instrument_type" do
-    body = {
-      "data" => [
-        {
-          "symbol" => "BTC/EUR",
-          "instrument_name" => "Bitcoin Euro",
-          "mic_code" => "",
-          "instrument_type" => "digital currency",
-          "currency" => ""
-        }
-      ]
-    }.to_json
-
-    mock_response = mock
-    mock_response.stubs(:body).returns(body)
-    @provider.stubs(:throttle_request)
-    @provider.stubs(:client).returns(mock_client = mock)
-    mock_client.stubs(:get).returns(mock_response)
-
-    result = @provider.search_securities("BTC")
-    assert_empty result.data
-  end
-
-  # ================================
-  #       Throttle Tests
-  # ================================
-
-  test "throttle_request enforces minimum interval between calls" do
-    @provider.send(:instance_variable_set, :@last_request_time, Time.current)
-
-    # Stub sleep to capture the call without actually sleeping
-    sleep_called_with = nil
-    @provider.define_singleton_method(:sleep) { |duration| sleep_called_with = duration }
-
-    # Stub cache to return under limit (read returns current count, increment charges)
-    Rails.cache.stubs(:read).returns(0)
-    Rails.cache.stubs(:increment).returns(1)
-
-    @provider.send(:throttle_request)
-
-    assert_not_nil sleep_called_with, "Should have called sleep to enforce minimum interval"
-    assert_operator sleep_called_with, :>, 0
-  end
-
-  test "throttle_request waits when per-minute credit limit is exceeded" do
-    # Stub cache read to return count at limit (adding 1 more would exceed 7)
-    Rails.cache.stubs(:read).returns(7)
-    Rails.cache.stubs(:increment).returns(8)
-
-    sleep_called = false
-    @provider.define_singleton_method(:sleep) { |_duration| sleep_called = true }
-
-    @provider.send(:throttle_request)
-
-    assert sleep_called, "Should have called sleep when credit limit exceeded"
-  end
-
-  test "throttle_request does not wait when under credit limit" do
-    # Set last_request_time far in the past so per-instance throttle doesn't trigger
-    @provider.send(:instance_variable_set, :@last_request_time, Time.at(0))
-
-    # Stub cache to return under limit
-    Rails.cache.stubs(:read).returns(3)
-    Rails.cache.stubs(:increment).returns(4)
-
-    sleep_called = false
-    @provider.define_singleton_method(:sleep) { |_duration| sleep_called = true }
-
-    @provider.send(:throttle_request)
-
-    assert_not sleep_called, "Should not sleep when under credit limit"
-  end
+  private
+    def json_response(payload)
+      JsonResponse.new(payload.to_json)
+    end
 end

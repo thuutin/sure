@@ -105,7 +105,7 @@ class Security < ApplicationRecord
   end
 
   def current_price
-    @current_price ||= find_or_fetch_price
+    @current_price ||= find_or_fetch_price ||= find_or_fetch_price(date: Date.current - 1.day)
     return nil if @current_price.nil?
     Money.new(@current_price.price, @current_price.currency)
   end
