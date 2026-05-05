@@ -1,7 +1,6 @@
-require "sidekiq/web"
-require "sidekiq/cron/web"
-
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => "/api-docs"
+
   use_doorkeeper
   # MFA routes
   resource :mfa, controller: "mfa", only: [ :new, :create ] do
@@ -12,8 +11,8 @@ Rails.application.routes.draw do
 
   mount Lookbook::Engine, at: "/design-system" if Rails.env.development?
 
-  # Uses basic auth - see config/initializers/sidekiq.rb
-  mount Sidekiq::Web => "/sidekiq"
+  mount MissionControl::Jobs::Engine, at: "/jobs"
+  mount Litestream::Engine, at: "/litestream" if Rails.env.production?
 
   # AI chats
   resources :chats do
@@ -267,8 +266,6 @@ Rails.application.routes.draw do
     post "plaid_eu"
     post "stripe"
   end
-
-  get "redis-configuration-error", to: "pages#redis_configuration_error"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
