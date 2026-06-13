@@ -1,5 +1,6 @@
 class SyncJob < ApplicationJob
   queue_as :high_priority
+  retry_on SQLite3::BusyException, wait: 1.minute, attempts: 3
 
   # Accept a runtime-only flag to influence sync behavior without persisting config
   def perform(sync, balances_only: false)

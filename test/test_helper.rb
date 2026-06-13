@@ -22,8 +22,7 @@ require "minitest/mock"
 require "minitest/autorun"
 require "mocha/minitest"
 require "aasm/minitest"
-require "webmock/minitest"
-require "uri"
+require "turbo/broadcastable/test_helper"
 
 VCR.configure do |config|
   config.cassette_library_dir = "test/vcr_cassettes"
@@ -59,6 +58,8 @@ OmniAuth.config.allowed_request_methods = [ :get, :post ]
 
 module ActiveSupport
   class TestCase
+    include Turbo::Broadcastable::TestHelper
+
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors) unless ENV["DISABLE_PARALLELIZATION"] == "true"
 

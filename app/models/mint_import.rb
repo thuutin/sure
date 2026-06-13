@@ -42,7 +42,6 @@ class MintImport < Import
           notes: row.notes,
           entryable: Transaction.new(category: category, tags: tags),
           import: self
-
         entry.save!
       end
     end

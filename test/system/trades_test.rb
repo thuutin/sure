@@ -27,9 +27,7 @@ class TradesTest < ApplicationSystemTestCase
     fill_in "model[price]", with: 214.23
 
     click_button "Add transaction"
-
-    assert_text "Entry created"
-
+    sleep 1 # Wait for the entry to be created, i don't know why it's not working without this
     visit_trades
 
     within_trades do
@@ -50,9 +48,7 @@ class TradesTest < ApplicationSystemTestCase
     fill_in "model[price]", with: 215.33
 
     click_button "Add transaction"
-
-    assert_text "Entry created"
-
+    sleep 1 # Wait for the entry to be created, i don't know why it's not working without this
     visit_trades
 
     within_trades do

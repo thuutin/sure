@@ -6,6 +6,8 @@ class Account < ApplicationRecord
   validates :name, :balance, :currency, presence: true
   validate :owner_belongs_to_family, if: -> { owner_id.present? && family_id.present? }
 
+  before_save :set_classification
+
   belongs_to :family
   belongs_to :owner, class_name: "User", optional: true
   belongs_to :import, optional: true
@@ -328,19 +330,14 @@ class Account < ApplicationRecord
   end
 
   def current_holdings
-    holdings
-      .where(currency: currency)
-      .where.not(qty: 0)
-      .where(
-        id: holdings.select("DISTINCT ON (security_id) id")
-                    .where(currency: currency)
-                    .order(:security_id, date: :desc)
-      )
-      .order(amount: :desc)
-  end
+    holding_ids = holdings.pluck(:security_id)
+      .uniq
+      .map { |security_id| holdings.where(security_id: security_id).order(date: :desc).first.id }
 
-  def latest_provider_holdings_snapshot_date
-    holdings.where.not(account_provider_id: nil).maximum(:date)
+    holdings.where(currency: currency)
+            .where.not(qty: 0)
+            .where(id: holding_ids)
+            .order(amount: :desc)
   end
 
   def start_date
@@ -413,61 +410,13 @@ class Account < ApplicationRecord
     end
   end
 
-  def owned_by?(user)
-    user.present? && owner_id == user.id
-  end
-
-  def shared_with?(user)
-    return false if user.nil?
-
-    owned_by?(user) ||
-      if account_shares.loaded?
-        account_shares.any? { |s| s.user_id == user.id }
-      else
-        account_shares.exists?(user: user)
-      end
-  end
-
-  def shared?
-    account_shares.any?
-  end
-
-  def permission_for(user)
-    return :owner if owned_by?(user)
-    account_shares.find_by(user: user)&.permission&.to_sym
-  end
-
-  def share_with!(user, permission: "read_only", include_in_finances: true)
-    account_shares.create!(user: user, permission: permission, include_in_finances: include_in_finances)
-  end
-
-  def unshare_with!(user)
-    account_shares.where(user: user).destroy_all
-  end
-
-  def auto_share_with_family!
-    records = family.users.where.not(id: owner_id).pluck(:id).map do |user_id|
-      { account_id: id, user_id: user_id, permission: "read_write",
-        include_in_finances: true, created_at: Time.current, updated_at: Time.current }
-    end
-
-    AccountShare.insert_all(records, unique_by: %i[account_id user_id]) if records.any?
-  end
-
   private
-
-    def assign_default_owner
-      return if owner.present?
-
-      if Current.user.present? && Current.user.family_id == family_id
-        self.owner = Current.user
+    def set_classification
+      self.classification = case accountable_type
+      when "Loan", "CreditCard", "OtherLiability"
+        "liability"
       else
-        self.owner = family&.users&.find_by(role: %w[admin super_admin]) || family&.users&.order(:created_at)&.first
+        "asset"
       end
-    end
-
-    def owner_belongs_to_family
-      return if User.where(id: owner_id, family_id: family_id).exists?
-      errors.add(:owner, :invalid, message: "must belong to the same family as the account")
     end
 end

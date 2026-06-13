@@ -47,17 +47,24 @@ class Holding < ApplicationRecord
   # otherwise falls back to calculating from trades. Returns nil when cost
   # basis cannot be determined (no trades and no provider cost_basis).
   def avg_cost
-    # Use stored cost_basis if available (eliminates N+1 queries)
-    # - If locked (user-set), trust the value even if 0 (valid for airdrops)
-    # - Otherwise require positive since providers sometimes return 0 when unknown
-    if cost_basis.present?
-      if cost_basis_locked? || cost_basis.positive?
-        return Money.new(cost_basis, currency)
+    avg_cost = begin
+      trades = account.trades
+        .with_entry
+        .where(security_id: security.id)
+        .where("trades.qty > 0 AND entries.date <= ?", date)
+      if trades.empty?
+        nil
+      else
+        rates = ExchangeRate.where(date: trades.pluck("entries.date"), from_currency: trades.pluck(:currency), to_currency: account.currency)
+        cost = 0
+        trades.each do |trade|
+          rate = rates.find { |r| r.date == trade.date && r.from_currency == trade.currency && r.to_currency == account.currency }
+          cost += trade.price * trade.qty * (rate&.rate || 1)
+        end
+        cost / trades.sum(:qty)
       end
     end
-
-    # Fallback to calculation for holdings without pre-computed cost_basis
-    calculate_avg_cost
+    Money.new(avg_cost || price, currency)
   end
 
   def trend

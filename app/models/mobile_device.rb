@@ -51,16 +51,35 @@ class MobileDevice < ApplicationRecord
     update_column(:last_seen_at, Time.current)
   end
 
-  def active_tokens
-    Doorkeeper::AccessToken
-      .where(mobile_device_id: id)
-      .where(resource_owner_id: user_id)
-      .where(revoked_at: nil)
-      .where("expires_in IS NULL OR created_at + expires_in * interval '1 second' > ?", Time.current)
+  def create_oauth_application!
+    return oauth_application if oauth_application.present?
+
+    app = Doorkeeper::Application.create!(
+      name: "Mobile App - #{device_id}",
+      redirect_uri: "maybe://oauth/callback", # Custom scheme for mobile
+      scopes: "read_write", # Use the configured scope
+      confidential: false # Public client for mobile
+    )
+
+    # Store the association
+    update!(oauth_application: app)
+    app
   end
 
   def revoke_all_tokens!
-    active_tokens.update_all(revoked_at: Time.current)
+    return Doorkeeper::AccessToken.none unless oauth_application
+
+    tokens = Doorkeeper::AccessToken
+      .where(application: oauth_application)
+      .where(resource_owner_id: user_id)
+      .where(revoked_at: nil)
+      .all
+    tokens.each do |token|
+      if token.expires_in.nil? || token.created_at + token.expires_in.seconds > Time.current
+        token.revoked_at = Time.current
+        token.save!
+      end
+    end
   end
 
   # Issues a fresh Doorkeeper access token for this device, revoking any
